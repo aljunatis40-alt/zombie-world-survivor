@@ -39,7 +39,7 @@ func _ready() -> void:
 		zombie.name = "Walker_%02d" % i
 		add_child(zombie)
 		var angle := TAU * float(i) / 9.0
-		zombie.position = Vector3(cos(angle) * 15.0, 1.0, sin(angle) * 15.0)
+		zombie.position = Vector3(cos(angle) * 25.0, 1.0, sin(angle) * 25.0)
 		zombie.set("target", player)
 		zombie.died.connect(_on_zombie_died)
 		zombie.connect("attacked", func(): _play_sound("zombie"))
@@ -165,8 +165,19 @@ func _build_environment() -> void:
 	world_root = Node3D.new()
 	world_root.name = "AbandonedDistrict"
 	add_child(world_root)
-	_add_box("Road", Vector3(0, -0.25, 0), Vector3(90, 0.5, 90), Color(0.12, 0.14, 0.15))
-	_add_box("RoadMarking", Vector3(0, 0.012, 0), Vector3(1.0, 0.025, 90), Color(0.72, 0.65, 0.38))
+	_add_box("DistrictGround", Vector3(0, -0.35, 0), Vector3(90, 0.5, 90), Color(0.20, 0.22, 0.18))
+	_add_box("MainRoad", Vector3(0, -0.055, 0), Vector3(12, 0.12, 90), Color(0.105, 0.12, 0.125))
+	_add_box("CrossRoad", Vector3(0, -0.05, 0), Vector3(90, 0.12, 12), Color(0.105, 0.12, 0.125))
+	for side in [-1, 1]:
+		_add_box("MainSidewalk", Vector3(side * 7.4, 0.02, 0), Vector3(2.6, 0.18, 90), Color(0.39, 0.39, 0.34))
+		_add_box("CrossSidewalk", Vector3(0, 0.025, side * 7.4), Vector3(90, 0.18, 2.6), Color(0.39, 0.39, 0.34))
+		_add_box("RoadEdgeLine", Vector3(side * 5.8, 0.025, 0), Vector3(0.12, 0.025, 90), Color(0.78, 0.72, 0.52))
+	for z_mark in range(-40, 41, 8):
+		_add_box("LaneDash", Vector3(0, 0.025, float(z_mark)), Vector3(0.18, 0.025, 3.2), Color(0.83, 0.78, 0.61))
+	for cross_mark in range(-4, 5):
+		_add_box("CrosswalkStripe", Vector3(float(cross_mark) * 1.15, 0.035, -6.2), Vector3(0.68, 0.035, 1.0), Color(0.82, 0.81, 0.72))
+	_build_safe_zone()
+	_build_objective_marker()
 	for x in [-1, 1]:
 		for z in [-1, 1]:
 			for n in range(3):
@@ -189,6 +200,22 @@ func _build_environment() -> void:
 		var debris_pos := Vector3(randf_range(-13, 13), 0.22, randf_range(-13, 13))
 		var debris := _add_box("StreetDebris", debris_pos, Vector3(randf_range(0.35, 1.2), 0.4, randf_range(0.3, 0.9)), Color(0.28, 0.25, 0.19))
 		debris.rotation.y = randf_range(0, TAU)
+
+
+func _build_safe_zone() -> void:
+	_add_box("SafeZoneFloor", Vector3(0, -0.035, 8), Vector3(10, 0.10, 8), Color(0.19, 0.27, 0.20))
+	for x in [-5.0, 5.0]:
+		for z in [4.0, 12.0]:
+			_detail_box(world_root, "SafeZoneBeacon", Vector3(0.22, 2.8, 0.22), Vector3(x, 1.4, z), Color(0.22, 0.82, 0.40))
+			_detail_box(world_root, "SafeZoneLamp", Vector3(0.48, 0.16, 0.48), Vector3(x, 2.85, z), Color(0.48, 0.95, 0.46))
+	_add_box("SafeZoneSign", Vector3(0, 2.1, 3.7), Vector3(4.2, 0.85, 0.16), Color(0.10, 0.28, 0.16))
+
+func _build_objective_marker() -> void:
+	var marker_position := Vector3(0, 0, -27)
+	_detail_box(world_root, "ObjectivePole", Vector3(0.18, 5.5, 0.18), marker_position + Vector3(0, 2.75, 0), Color(0.16, 0.18, 0.16))
+	_detail_box(world_root, "ObjectiveFlag", Vector3(2.1, 0.95, 0.12), marker_position + Vector3(1.0, 4.8, 0), Color(0.86, 0.58, 0.16))
+	_detail_box(world_root, "SupplyCrate", Vector3(1.5, 1.1, 1.2), marker_position + Vector3(0, 0.55, 1.8), Color(0.34, 0.25, 0.13))
+	_detail_box(world_root, "SupplyCrateLid", Vector3(1.58, 0.12, 1.28), marker_position + Vector3(0, 1.12, 1.8), Color(0.52, 0.39, 0.19))
 
 func _decorate_building(building: MeshInstance3D, height: float, variant: int) -> void:
 	var glass_colors := [Color(0.10, 0.19, 0.22), Color(0.16, 0.24, 0.25), Color(0.22, 0.20, 0.16)]
