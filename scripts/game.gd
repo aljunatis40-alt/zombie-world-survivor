@@ -12,6 +12,7 @@ var magazine_ammo := 12
 var reserve_ammo := 60
 var is_reloading := false
 var sound_players: Dictionary = {}
+var bench_positions: Array[Vector3] = []
 
 func _ready() -> void:
 	_build_audio()
@@ -30,6 +31,7 @@ func _ready() -> void:
 	hud.reload_requested.connect(_on_reload_requested)
 	hud.jump_requested.connect(_on_jump_requested)
 	hud.sprint_changed.connect(_on_sprint_changed)
+	hud.sit_requested.connect(_on_sit_requested)
 	player.connect("footstep", func(): _play_sound("footstep"))
 	player.connect("jumped", func(): _play_sound("jump"))
 	player.connect("landed", func(): _play_sound("land"))
@@ -210,6 +212,8 @@ func _build_environment() -> void:
 		debris.rotation.y = randf_range(0, TAU)
 	_build_outer_districts()
 	_build_parked_vehicles()
+	_build_park_and_shops()
+	_build_philippine_public_transport()
 
 
 func _build_extended_road_network() -> void:
@@ -261,6 +265,121 @@ func _build_parked_vehicles() -> void:
 			for wheel_z in [-1.25, 1.25]:
 				var wheel := _detail_box(vehicle, "VehicleWheel", Vector3(0.34, 0.68, 0.68), Vector3(wheel_x, 0.48, wheel_z), Color(0.055, 0.06, 0.055))
 				wheel.rotation.z = PI * 0.5
+
+
+func _on_sit_requested() -> void:
+	if not is_instance_valid(player):
+		return
+	if bool(player.get("seated")):
+		player.call("set_seated", false)
+		hud.sit_button.text = "SIT"
+		return
+	var nearest_distance := INF
+	for bench_position in bench_positions:
+		var distance := Vector2(player.global_position.x - bench_position.x, player.global_position.z - bench_position.z).length()
+		if distance < nearest_distance:
+			nearest_distance = distance
+	if nearest_distance <= 3.2:
+		player.call("set_seated", true)
+		hud.sit_button.text = "STAND"
+	else:
+		hud.sit_button.text = "NEAR BENCH"
+
+func _build_park_and_shops() -> void:
+	# Small neighborhood park with walkways, benches and shade trees.
+	_add_box("NeighborhoodParkLawn", Vector3(65, -0.02, 0), Vector3(34, 0.12, 32), Color(0.16, 0.29, 0.16))
+	_add_box("ParkWalkway", Vector3(65, 0.055, 0), Vector3(3.0, 0.08, 30), Color(0.48, 0.46, 0.38))
+	for bench_index in range(4):
+		var bench_pos := Vector3(54.0 + float(bench_index % 2) * 22.0, 0, -9.0 + float(bench_index / 2) * 18.0)
+		bench_positions.append(bench_pos)
+		_add_box("ParkBenchSeat", bench_pos + Vector3(0, 0.58, 0), Vector3(2.2, 0.16, 0.72), Color(0.36, 0.22, 0.12))
+		_add_box("ParkBenchBack", bench_pos + Vector3(0, 1.08, 0.30), Vector3(2.2, 0.85, 0.14), Color(0.31, 0.19, 0.11))
+		for leg_x in [-0.82, 0.82]:
+			_add_box("ParkBenchLeg", bench_pos + Vector3(leg_x, 0.28, 0), Vector3(0.13, 0.56, 0.13), Color(0.12, 0.13, 0.12))
+	for tree_index in range(12):
+		var angle := TAU * float(tree_index) / 12.0
+		var tree_pos := Vector3(65 + cos(angle) * 14.0, 1.4, sin(angle) * 13.0)
+		_add_box("ParkTreeTrunk", tree_pos, Vector3(0.55, 2.8, 0.55), Color(0.24, 0.16, 0.10))
+		_detail_box(world_root, "ParkTreeCanopy", Vector3(2.8, 3.0, 2.8), tree_pos + Vector3(0, 2.4, 0), Color(0.18, 0.31, 0.17))
+	for lamp_index in range(4):
+		_add_street_lamp(Vector3(51 + float(lamp_index % 2) * 28.0, 0, -12 + float(lamp_index / 2) * 24.0))
+	var park_sign := _detail_box(world_root, "ParkWelcomeSign", Vector3(5.5, 1.0, 0.18), Vector3(65, 2.2, -16.0), Color(0.10, 0.27, 0.16))
+	var park_label := Label3D.new()
+	park_label.text = "BARANGAY PARK  •  REST AREA"
+	park_label.font_size = 36
+	park_label.pixel_size = 0.012
+	park_label.modulate = Color(0.94, 0.88, 0.68)
+	park_label.position = Vector3(0, 0, -0.12)
+	park_sign.add_child(park_label)
+
+	# Filipino neighborhood food stops; text-only signs, no copied brand logos.
+	_add_shop("Mang Inasal Inspired Grill", Vector3(-112, 0, -27), "MANG INASAL", Color(0.68, 0.28, 0.10))
+	_add_shop("Jollibee Inspired Chicken Shop", Vector3(-112, 0, 0), "JOLLIBEE", Color(0.72, 0.12, 0.12))
+	_add_shop("McDonalds Inspired Burger Shop", Vector3(-112, 0, 27), "McDONALD'S", Color(0.72, 0.16, 0.10))
+
+func _add_shop(shop_name: String, center: Vector3, sign_text: String, sign_color: Color) -> void:
+	var shop := _add_box(shop_name, center + Vector3(0, 3.4, 0), Vector3(13, 6.8, 9), Color(0.34, 0.32, 0.27))
+	shop.name = shop_name.replace(" ", "_")
+	_detail_box(shop, "ShopFrontGlass", Vector3(9.2, 3.0, 0.12), Vector3(0, -0.65, -4.58), Color(0.12, 0.20, 0.21))
+	_detail_box(shop, "ShopDoor", Vector3(1.35, 2.7, 0.16), Vector3(0, -1.05, -4.68), Color(0.16, 0.18, 0.16))
+	var sign_board := _detail_box(shop, "ShopSignBoard", Vector3(11.8, 1.35, 0.28), Vector3(0, 2.25, -4.72), sign_color)
+	var sign_label := Label3D.new()
+	sign_label.text = sign_text
+	sign_label.font_size = 64
+	sign_label.pixel_size = 0.012
+	sign_label.modulate = Color(1.0, 0.93, 0.78)
+	sign_label.position = Vector3(0, -0.10, -0.18)
+	sign_board.add_child(sign_label)
+	_detail_box(shop, "ShopAwning", Vector3(13.5, 0.22, 1.1), Vector3(0, 0.10, -5.0), Color(0.17, 0.18, 0.16))
+
+func _build_philippine_public_transport() -> void:
+	_build_jeepney(Vector3(18, 0, 52))
+	_build_city_bus(Vector3(-18, 0, 52))
+
+func _build_jeepney(position: Vector3) -> void:
+	var jeep := Node3D.new()
+	jeep.name = "ModernPhilippineJeepney"
+	jeep.position = position
+	jeep.rotation.y = PI * 0.5
+	world_root.add_child(jeep)
+	_detail_box(jeep, "JeepneyLowerBody", Vector3(2.5, 1.15, 6.2), Vector3(0, 1.05, 0), Color(0.16, 0.34, 0.31))
+	_detail_box(jeep, "JeepneyRoof", Vector3(2.45, 0.20, 5.9), Vector3(0, 2.35, 0.05), Color(0.78, 0.62, 0.20))
+	_detail_box(jeep, "JeepneyWindshield", Vector3(2.1, 0.85, 0.10), Vector3(0, 1.78, -3.08), Color(0.13, 0.22, 0.25))
+	for side in [-1.0, 1.0]:
+		_detail_box(jeep, "JeepneySideWindows", Vector3(0.10, 0.82, 4.65), Vector3(side * 1.27, 1.78, 0.0), Color(0.13, 0.23, 0.25))
+		_detail_box(jeep, "JeepneyChromeTrim", Vector3(0.08, 0.12, 5.8), Vector3(side * 1.30, 1.35, 0), Color(0.72, 0.70, 0.60))
+		for wheel_z in [-2.0, 2.0]:
+			var tire := _detail_box(jeep, "JeepneyTire", Vector3(0.42, 0.88, 0.88), Vector3(side * 1.28, 0.52, wheel_z), Color(0.045, 0.05, 0.05))
+			tire.rotation.z = PI * 0.5
+	var route_sign := Label3D.new()
+	route_sign.text = "CITY • TERMINAL"
+	route_sign.font_size = 34
+	route_sign.pixel_size = 0.012
+	route_sign.modulate = Color(1.0, 0.92, 0.55)
+	route_sign.position = Vector3(0, 2.02, -3.15)
+	jeep.add_child(route_sign)
+
+func _build_city_bus(position: Vector3) -> void:
+	var bus := Node3D.new()
+	bus.name = "ModernPhilippineCityBus"
+	bus.position = position
+	bus.rotation.y = -PI * 0.5
+	world_root.add_child(bus)
+	_detail_box(bus, "CityBusBody", Vector3(2.75, 3.0, 10.0), Vector3(0, 1.8, 0), Color(0.72, 0.73, 0.67))
+	_detail_box(bus, "CityBusWindowBand", Vector3(2.80, 1.15, 8.7), Vector3(0, 2.48, 0.0), Color(0.12, 0.22, 0.26))
+	_detail_box(bus, "CityBusFrontGlass", Vector3(2.2, 1.15, 0.12), Vector3(0, 2.42, -5.04), Color(0.12, 0.22, 0.26))
+	_detail_box(bus, "CityBusLowerFront", Vector3(2.6, 0.72, 0.16), Vector3(0, 0.98, -5.08), Color(0.16, 0.29, 0.38))
+	for side in [-1.0, 1.0]:
+		for wheel_z in [-3.4, 3.4]:
+			var tire := _detail_box(bus, "CityBusTire", Vector3(0.42, 0.92, 0.92), Vector3(side * 1.40, 0.58, wheel_z), Color(0.045, 0.05, 0.05))
+			tire.rotation.z = PI * 0.5
+	var bus_sign := Label3D.new()
+	bus_sign.text = "METRO • CITY BUS"
+	bus_sign.font_size = 38
+	bus_sign.pixel_size = 0.012
+	bus_sign.modulate = Color(0.96, 0.94, 0.78)
+	bus_sign.position = Vector3(0, 3.35, -5.12)
+	bus.add_child(bus_sign)
 
 func _build_safe_zone() -> void:
 	_add_box("SafeZoneFloor", Vector3(0, -0.035, 8), Vector3(10, 0.10, 8), Color(0.19, 0.27, 0.20))
