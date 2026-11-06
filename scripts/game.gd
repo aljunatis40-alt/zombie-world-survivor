@@ -6,6 +6,7 @@ const HudScript = preload("res://scripts/hud.gd")
 
 var player: CharacterBody3D
 var hud: Control
+var hud_layer: CanvasLayer
 var world_root: Node3D
 var zombies: Array[Node3D] = []
 var magazine_ammo := 12
@@ -22,10 +23,15 @@ func _ready() -> void:
 	player.name = "Survivor"
 	add_child(player)
 	player.position = Vector3(0, 1.1, 8)
+	# A Control under Node3D is not drawn as a screen HUD. Put it on a CanvasLayer.
+	hud_layer = CanvasLayer.new()
+	hud_layer.name = "HUDCanvas"
+	hud_layer.layer = 10
+	add_child(hud_layer)
 	hud = Control.new()
 	hud.set_script(HudScript)
 	hud.name = "MobileHUD"
-	add_child(hud)
+	hud_layer.add_child(hud)
 	hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hud.fire_requested.connect(_on_fire_requested)
 	hud.reload_requested.connect(_on_reload_requested)
