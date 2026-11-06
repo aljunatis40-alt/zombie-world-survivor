@@ -64,7 +64,7 @@ jobs:
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           mkdir -p build/android
-          mkdir -p "$HOME/.android"
+          mkdir -p "$GITHUB_WORKSPACE/.android"
           cp "$HOME/.android/debug.keystore" "$GITHUB_WORKSPACE/.android/debug.keystore"
           godot --headless --path . --export-debug "Android" build/android/ZombieWorldSurvivor-debug.apk
 
