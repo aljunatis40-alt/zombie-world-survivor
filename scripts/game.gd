@@ -117,7 +117,7 @@ func _make_sfx(frequency: float, duration: float, volume: float, noise_mix: floa
 	var sample_rate := 22050
 	var sample_count := int(sample_rate * duration)
 	var samples := PackedByteArray()
-	samples.resize(sample_count)
+	samples.resize(sample_count * 2)
 	for i in range(sample_count):
 		var t := float(i) / float(sample_rate)
 		var progress := float(i) / float(sample_count)
@@ -128,9 +128,11 @@ func _make_sfx(frequency: float, duration: float, volume: float, noise_mix: floa
 		if frequency < 100.0:
 			tone *= 0.72 + 0.28 * sin(TAU * 7.0 * t)
 		var sample := clampf((tone + noise) * envelope * volume, -1.0, 1.0)
-		samples[i] = clampi(roundi(sample * 127.0 + 128.0), 0, 255)
+		var pcm := clampi(roundi(sample * 32767.0), -32768, 32767)
+		samples[i * 2] = pcm & 0xff
+		samples[i * 2 + 1] = (pcm >> 8) & 0xff
 	var stream := AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_8_BITS
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = sample_rate
 	stream.stereo = false
 	stream.data = samples
