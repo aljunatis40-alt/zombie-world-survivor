@@ -1,6 +1,8 @@
 extends CharacterBody3D
 
 signal died(zombie: Node3D)
+signal attacked
+signal hit_received
 
 @export var max_health := 100
 @export var move_speed := 2.1
@@ -124,6 +126,7 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0.0, move_speed * 5.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, move_speed * 5.0 * delta)
 		if attack_cooldown <= 0.0:
+			attacked.emit()
 			target.call("apply_damage", 8)
 			attack_cooldown = 1.25
 	if not is_on_floor():
@@ -147,6 +150,7 @@ func take_damage(amount: int) -> void:
 	if health <= 0:
 		return
 	health = maxi(0, health - amount)
+	hit_received.emit()
 	hit_flash = 0.16
 	if health <= 0:
 		died.emit(self)
