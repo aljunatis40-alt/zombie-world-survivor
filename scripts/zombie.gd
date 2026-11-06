@@ -1,5 +1,7 @@
 extends CharacterBody3D
 
+signal died(zombie: Node3D)
+
 @export var max_health := 100
 @export var move_speed := 2.1
 var health := 100
@@ -52,6 +54,9 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 func take_damage(amount: int) -> void:
-	health -= amount
 	if health <= 0:
+		return
+	health = maxi(0, health - amount)
+	if health <= 0:
+		died.emit(self)
 		queue_free()
