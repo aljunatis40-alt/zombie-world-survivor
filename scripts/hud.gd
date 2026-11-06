@@ -91,9 +91,10 @@ func _button_style(color: Color) -> StyleBoxFlat:
 func _find_player() -> void:
 	player_ref = get_parent().get_node_or_null("Survivor")
 
-func set_status(health: int, zombie_count: int, ammo: int, reserve: int) -> void:
+func set_status(health: int, zombie_count: int, ammo: int, reserve: int, reloading: bool = false) -> void:
 	if is_instance_valid(status_label):
-		status_label.text = "HP  %03d     AMMO  %02d/%02d     INFECTED  %02d" % [health, ammo, reserve, zombie_count]
+		var reload_text := "     RELOADING..." if reloading else ""
+		status_label.text = "HP  %03d     AMMO  %02d/%02d     INFECTED  %02d%s" % [health, ammo, reserve, zombie_count, reload_text]
 
 func _is_over_action_button(point: Vector2) -> bool:
 	for button in [fire_button, reload_button, jump_button, sprint_button]:
