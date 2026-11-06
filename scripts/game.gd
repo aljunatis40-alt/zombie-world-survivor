@@ -11,8 +11,10 @@ var zombies: Array[Node3D] = []
 var magazine_ammo := 12
 var reserve_ammo := 60
 var is_reloading := false
+var sound_players: Dictionary = {}
 
 func _ready() -> void:
+	_build_audio()
 	_build_environment()
 	player = CharacterBody3D.new()
 	player.set_script(PlayerScript)
@@ -28,6 +30,9 @@ func _ready() -> void:
 	hud.reload_requested.connect(_on_reload_requested)
 	hud.jump_requested.connect(_on_jump_requested)
 	hud.sprint_changed.connect(_on_sprint_changed)
+	player.footstep.connect(func(): _play_sound("footstep"))
+	player.jumped.connect(func(): _play_sound("jump"))
+	player.landed.connect(func(): _play_sound("land"))
 	for i in range(9):
 		var zombie := CharacterBody3D.new()
 		zombie.set_script(ZombieScript)
@@ -37,9 +42,12 @@ func _ready() -> void:
 		zombie.position = Vector3(cos(angle) * 15.0, 1.0, sin(angle) * 15.0)
 		zombie.set("target", player)
 		zombie.died.connect(_on_zombie_died)
+		zombie.attacked.connect(func(): _play_sound("zombie"))
+		zombie.hit_received.connect(func(): _play_sound("hit"))
 		zombies.append(zombie)
 
 func _on_zombie_died(zombie: Node3D) -> void:
+	_play_sound("zombie_down")
 	zombies.erase(zombie)
 
 func _process(_delta: float) -> void:
@@ -58,6 +66,7 @@ func _on_reload_requested() -> void:
 	if is_reloading or magazine_ammo >= 12 or reserve_ammo <= 0:
 		return
 	is_reloading = true
+	_play_sound("reload")
 	await get_tree().create_timer(1.25).timeout
 	if not is_inside_tree():
 		return
@@ -71,6 +80,7 @@ func _on_fire_requested() -> void:
 	if is_reloading or not is_instance_valid(player) or magazine_ammo <= 0:
 		return
 	magazine_ammo -= 1
+	_play_sound("fire")
 	var camera: Camera3D = player.get("camera")
 	if not is_instance_valid(camera):
 		return
@@ -81,6 +91,56 @@ func _on_fire_requested() -> void:
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if hit and hit.collider and hit.collider.is_in_group("zombies"):
 		hit.collider.call("take_damage", 50)
+
+
+func _build_audio() -> void:
+	var definitions := {
+		"footstep": [92.0, 0.10, 0.34, 0.30],
+		"jump": [210.0, 0.16, 0.28, 0.08],
+		"land": [68.0, 0.13, 0.42, 0.48],
+		"fire": [125.0, 0.11, 0.52, 0.72],
+		"reload": [740.0, 0.20, 0.30, 0.64],
+		"zombie": [78.0, 0.34, 0.34, 0.38],
+		"hit": [155.0, 0.09, 0.30, 0.58],
+		"zombie_down": [58.0, 0.24, 0.26, 0.30]
+	}
+	for sound_name in definitions:
+		var values: Array = definitions[sound_name]
+		var player_audio := AudioStreamPlayer.new()
+		player_audio.name = "SFX_" + sound_name
+		player_audio.volume_db = -5.0
+		player_audio.stream = _make_sfx(values[0], values[1], values[2], values[3])
+		add_child(player_audio)
+		sound_players[sound_name] = player_audio
+
+func _make_sfx(frequency: float, duration: float, volume: float, noise_mix: float) -> AudioStreamWAV:
+	var sample_rate := 22050
+	var sample_count := int(sample_rate * duration)
+	var samples := PackedByteArray()
+	samples.resize(sample_count)
+	for i in range(sample_count):
+		var t := float(i) / float(sample_rate)
+		var progress := float(i) / float(sample_count)
+		var envelope := minf(1.0, progress * 18.0) * pow(1.0 - progress, 1.65)
+		var tone := sin(TAU * frequency * t) * (1.0 - noise_mix)
+		var noise := sin(float(i) * 12.9898) * 43758.5453
+		noise = (fposmod(noise, 1.0) * 2.0 - 1.0) * noise_mix
+		if frequency < 100.0:
+			tone *= 0.72 + 0.28 * sin(TAU * 7.0 * t)
+		var sample := clampf((tone + noise) * envelope * volume, -1.0, 1.0)
+		samples[i] = clampi(roundi(sample * 127.0 + 128.0), 0, 255)
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_8_BITS
+	stream.mix_rate = sample_rate
+	stream.stereo = false
+	stream.data = samples
+	return stream
+
+func _play_sound(sound_name: String) -> void:
+	var audio: AudioStreamPlayer = sound_players.get(sound_name)
+	if is_instance_valid(audio):
+		audio.stop()
+		audio.play()
 
 func _build_environment() -> void:
 	var env := WorldEnvironment.new()
