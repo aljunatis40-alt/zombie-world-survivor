@@ -11,6 +11,7 @@ signal landed
 var gravity := 22.0
 var camera_pivot: Node3D
 var camera: Camera3D
+var camera_spring: SpringArm3D
 var visual: Node3D
 var left_arm_pivot: Node3D
 var right_arm_pivot: Node3D
@@ -34,12 +35,19 @@ func _ready() -> void:
 	_build_survivor_visual()
 	camera_pivot = Node3D.new()
 	camera_pivot.position = Vector3(0, 1.35, 0)
+	camera_pivot.rotation_degrees.x = -12
 	add_child(camera_pivot)
+	# Spring arm pushes the camera forward when a wall/building is behind it.
+	camera_spring = SpringArm3D.new()
+	camera_spring.name = "CameraCollisionArm"
+	camera_spring.spring_length = 5.8
+	camera_spring.margin = 0.28
+	camera_spring.collision_mask = 1
+	camera_pivot.add_child(camera_spring)
 	camera = Camera3D.new()
-	camera.position = Vector3(0, 2.0, 5.8)
-	camera.rotation_degrees.x = -12
+	camera.position = Vector3.ZERO
 	camera.current = true
-	camera_pivot.add_child(camera)
+	camera_spring.add_child(camera)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if not OS.has_feature("mobile") else Input.MOUSE_MODE_VISIBLE
 
 func _build_survivor_visual() -> void:
@@ -140,7 +148,7 @@ func _add_box(parent: Node3D, label: String, dimensions: Vector3, pos: Vector3, 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		camera_pivot.rotate_y(-event.relative.x * 0.003)
-		camera.rotation.x = clamp(camera.rotation.x - event.relative.y * 0.003, -0.75, 0.25)
+		camera_pivot.rotation.x = clamp(camera_pivot.rotation.x - event.relative.y * 0.003, -0.75, 0.25)
 
 func set_mobile_move(value: Vector2) -> void:
 	move_touch = value.limit_length(1.0)
@@ -175,7 +183,7 @@ func set_seated(active: bool) -> void:
 
 func add_mobile_look(value: Vector2) -> void:
 	camera_pivot.rotate_y(-value.x * 0.006)
-	camera.rotation.x = clamp(camera.rotation.x - value.y * 0.006, -0.75, 0.25)
+	camera_pivot.rotation.x = clamp(camera_pivot.rotation.x - value.y * 0.006, -0.75, 0.25)
 
 func _physics_process(delta: float) -> void:
 	if seated:
