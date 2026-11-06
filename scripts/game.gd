@@ -54,6 +54,13 @@ func _on_zombie_died(zombie: Node3D) -> void:
 func _process(_delta: float) -> void:
 	if is_instance_valid(hud) and is_instance_valid(player):
 		hud.set_status(int(player.get("health")), zombies.size(), magazine_ammo, reserve_ammo, is_reloading)
+		var camera: Camera3D = player.get("camera")
+		if is_instance_valid(camera):
+			var objective_position := Vector3(0, 0, -25.2)
+			var to_objective := objective_position - player.global_position
+			var distance := to_objective.length()
+			var local_direction := camera.global_transform.basis.inverse() * to_objective.normalized()
+			hud.set_objective_navigation(local_direction, distance)
 
 func _on_jump_requested() -> void:
 	if is_instance_valid(player):
