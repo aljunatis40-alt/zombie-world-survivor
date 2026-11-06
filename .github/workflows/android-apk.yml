@@ -34,7 +34,13 @@ jobs:
       - name: Install Android SDK packages
         run: |
           yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          sdkmanager --sdk_root="$ANDROID_HOME" \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "cmdline-tools;latest" \
+            "ndk;23.2.8568313" \
+            "cmake;3.10.2.4988404"
 
       - name: Install Godot 4.3 and export templates
         run: |
@@ -45,6 +51,23 @@ jobs:
           wget -q "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz" -O templates.tpz
           unzip -q templates.tpz -d templates
           cp templates/templates/* "$HOME/.local/share/godot/export_templates/4.3.stable/"
+
+      - name: Configure Godot Android SDK paths
+        run: |
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
+          echo "Android SDK: $ANDROID_HOME"
+          echo "Java SDK: $JAVA_HOME"
+          test -x "$JAVA_HOME/bin/java"
+          test -x "$ANDROID_HOME/platform-tools/adb"
+          test -d "$ANDROID_HOME/ndk/23.2.8568313"
+          test -d "$ANDROID_HOME/cmake/3.10.2.4988404"
 
       - name: Import and validate project
         run: godot --headless --path . --editor --quit
@@ -66,7 +89,7 @@ jobs:
           mkdir -p build/android
           mkdir -p "$GITHUB_WORKSPACE/.android"
           cp "$HOME/.android/debug.keystore" "$GITHUB_WORKSPACE/.android/debug.keystore"
-          godot --headless --path . --export-debug "Android" build/android/ZombieWorldSurvivor-debug.apk
+          godot --headless --verbose --path . --export-debug "Android" build/android/ZombieWorldSurvivor-debug.apk
 
       - name: Verify APK
         run: |
