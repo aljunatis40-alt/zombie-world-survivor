@@ -40,6 +40,11 @@ func _build_zombie_visual() -> void:
 	var eye_material := _material(Color(0.82, 0.48, 0.16))
 	_add_capsule(visual, "Torso", 0.30, 0.91, Vector3(0, 0.10, 0), body_material)
 	_add_sphere(visual, "Head", 0.235, Vector3(0, 0.78, 0), skin)
+	_add_sphere(visual, "LeftEar", 0.06, Vector3(-0.22, 0.79, 0), skin)
+	_add_sphere(visual, "RightEar", 0.06, Vector3(0.22, 0.79, 0), skin)
+	_add_sphere(visual, "Nose", 0.045, Vector3(0, 0.76, -0.22), skin)
+	_add_sphere(visual, "LeftEyeSocket", 0.043, Vector3(-0.085, 0.82, -0.19), dark)
+	_add_sphere(visual, "RightEyeSocket", 0.043, Vector3(0.085, 0.82, -0.19), dark)
 	_add_sphere(visual, "Jaw", 0.15, Vector3(0, 0.66, -0.10), dark)
 	_add_sphere(visual, "LeftEye", 0.035, Vector3(-0.085, 0.81, -0.205), eye_material)
 	_add_sphere(visual, "RightEye", 0.035, Vector3(0.085, 0.81, -0.205), eye_material)
@@ -50,8 +55,12 @@ func _build_zombie_visual() -> void:
 	visual.add_child(right_arm)
 	_add_capsule(left_arm, "Sleeve", 0.12, 0.67, Vector3(0, -0.29, 0), torn_clothes)
 	_add_sphere(left_arm, "Hand", 0.105, Vector3(0, -0.64, -0.015), skin)
+	for finger in range(4):
+		_add_capsule(left_arm, "Finger_%d" % finger, 0.022, 0.105, Vector3(-0.06 + finger * 0.04, -0.73, -0.04), skin)
 	_add_capsule(right_arm, "Sleeve", 0.12, 0.67, Vector3(0, -0.29, 0), torn_clothes)
 	_add_sphere(right_arm, "Hand", 0.105, Vector3(0, -0.64, -0.015), skin)
+	for finger in range(4):
+		_add_capsule(right_arm, "Finger_%d" % finger, 0.022, 0.105, Vector3(-0.06 + finger * 0.04, -0.73, -0.04), skin)
 	left_leg = _pivot("LeftLeg", Vector3(-0.16, -0.30, 0))
 	right_leg = _pivot("RightLeg", Vector3(0.16, -0.30, 0))
 	visual.add_child(left_leg)
@@ -121,7 +130,7 @@ func _physics_process(delta: float) -> void:
 		var direction := to_player.normalized()
 		velocity.x = direction.x * move_speed
 		velocity.z = direction.z * move_speed
-		visual.rotation.y = lerp_angle(visual.rotation.y, atan2(direction.x, direction.z), delta * 7.0)
+		visual.rotation.y = lerp_angle(visual.rotation.y, atan2(-direction.x, -direction.z), delta * 7.0)
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, move_speed * 5.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, move_speed * 5.0 * delta)
