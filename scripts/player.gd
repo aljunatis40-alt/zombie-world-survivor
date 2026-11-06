@@ -205,6 +205,8 @@ func add_mobile_look(value: Vector2) -> void:
 	camera_pivot.rotation.x = clamp(camera_pivot.rotation.x - value.y * 0.006, -0.75, 0.25)
 
 func _physics_process(delta: float) -> void:
+	if InputMap.has_action("crouch") and Input.is_action_just_pressed("crouch"):
+		set_crouched(not crouched)
 	if seated:
 		velocity = Vector3.ZERO
 		move_and_slide()
