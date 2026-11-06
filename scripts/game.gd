@@ -30,9 +30,9 @@ func _ready() -> void:
 	hud.reload_requested.connect(_on_reload_requested)
 	hud.jump_requested.connect(_on_jump_requested)
 	hud.sprint_changed.connect(_on_sprint_changed)
-	player.footstep.connect(func(): _play_sound("footstep"))
-	player.jumped.connect(func(): _play_sound("jump"))
-	player.landed.connect(func(): _play_sound("land"))
+	player.connect("footstep", func(): _play_sound("footstep"))
+	player.connect("jumped", func(): _play_sound("jump"))
+	player.connect("landed", func(): _play_sound("land"))
 	for i in range(9):
 		var zombie := CharacterBody3D.new()
 		zombie.set_script(ZombieScript)
@@ -42,8 +42,8 @@ func _ready() -> void:
 		zombie.position = Vector3(cos(angle) * 15.0, 1.0, sin(angle) * 15.0)
 		zombie.set("target", player)
 		zombie.died.connect(_on_zombie_died)
-		zombie.attacked.connect(func(): _play_sound("zombie"))
-		zombie.hit_received.connect(func(): _play_sound("hit"))
+		zombie.connect("attacked", func(): _play_sound("zombie"))
+		zombie.connect("hit_received", func(): _play_sound("hit"))
 		zombies.append(zombie)
 
 func _on_zombie_died(zombie: Node3D) -> void:
