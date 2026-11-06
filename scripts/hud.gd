@@ -5,9 +5,11 @@ signal reload_requested
 signal jump_requested
 signal sprint_changed(active: bool)
 
-const JOYSTICK_RADIUS := 68.0
+const BASE_BUTTON_SIZE := Vector2(92, 64)
+const BASE_FIRE_SIZE := Vector2(108, 78)
 const LOOK_ZONE_RATIO := 0.48
-const BUTTON_SIZE := Vector2(92, 64)
+var joystick_radius := 68.0
+var ui_scale := 1.0
 var status_label: Label
 var hint_label: Label
 var fire_button: Button
@@ -26,32 +28,32 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_build_hud()
 	call_deferred("_find_player")
+	call_deferred("_layout_hud")
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and is_instance_valid(fire_button):
+		_layout_hud()
 
 func _build_hud() -> void:
 	status_label = Label.new()
-	status_label.position = Vector2(28, 22)
-	status_label.add_theme_font_size_override("font_size", 22)
 	status_label.add_theme_color_override("font_color", Color(0.93, 0.96, 0.9))
-	status_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	status_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
 	status_label.add_theme_constant_override("shadow_offset_x", 2)
 	status_label.add_theme_constant_override("shadow_offset_y", 2)
 	add_child(status_label)
 
 	hint_label = Label.new()
 	hint_label.text = "MOVE"
-	hint_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	hint_label.position = Vector2(34, -108)
-	hint_label.add_theme_font_size_override("font_size", 14)
 	hint_label.add_theme_color_override("font_color", Color(0.88, 0.92, 0.86, 0.8))
 	add_child(hint_label)
 
-	fire_button = _make_button("FIRE", Vector2(-132, -118), Vector2(108, 78))
+	fire_button = _make_button("FIRE")
 	fire_button.pressed.connect(func(): fire_requested.emit())
-	reload_button = _make_button("RELOAD", Vector2(-244, -92), BUTTON_SIZE)
+	reload_button = _make_button("RELOAD")
 	reload_button.pressed.connect(func(): reload_requested.emit())
-	jump_button = _make_button("JUMP", Vector2(-132, -210), BUTTON_SIZE)
+	jump_button = _make_button("JUMP")
 	jump_button.pressed.connect(func(): jump_requested.emit())
-	sprint_button = _make_button("RUN", Vector2(-244, -210), BUTTON_SIZE)
+	sprint_button = _make_button("RUN")
 	sprint_button.button_down.connect(func():
 		sprint_active = true
 		sprint_changed.emit(true)
@@ -61,22 +63,46 @@ func _build_hud() -> void:
 		sprint_changed.emit(false)
 	)
 
-func _make_button(label: String, offset: Vector2, button_size: Vector2) -> Button:
+func _make_button(label: String) -> Button:
 	var button := Button.new()
 	button.text = label
-	button.size = button_size
-	button.anchor_left = 1
-	button.anchor_top = 1
-	button.anchor_right = 1
-	button.anchor_bottom = 1
-	button.position = offset
-	button.add_theme_font_size_override("font_size", 17)
 	button.add_theme_color_override("font_color", Color(1, 1, 1))
 	button.add_theme_stylebox_override("normal", _button_style(Color(0.09, 0.13, 0.12, 0.82)))
 	button.add_theme_stylebox_override("hover", _button_style(Color(0.17, 0.25, 0.19, 0.94)))
 	button.add_theme_stylebox_override("pressed", _button_style(Color(0.35, 0.19, 0.12, 0.96)))
 	add_child(button)
 	return button
+
+func _layout_hud() -> void:
+	if size.x <= 0.0 or size.y <= 0.0:
+		return
+	ui_scale = clampf(minf(size.x / 1280.0, size.y / 720.0), 0.72, 1.0)
+	joystick_radius = 68.0 * ui_scale
+	var margin := 24.0 * ui_scale
+	var gap := 12.0 * ui_scale
+	var action_size := BASE_BUTTON_SIZE * ui_scale
+	var fire_size := BASE_FIRE_SIZE * ui_scale
+
+	status_label.position = Vector2(margin, margin * 0.8)
+	status_label.add_theme_font_size_override("font_size", roundi(22.0 * ui_scale))
+	hint_label.position = Vector2(margin + 8.0 * ui_scale, -margin - 94.0 * ui_scale)
+	hint_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	hint_label.add_theme_font_size_override("font_size", roundi(14.0 * ui_scale))
+
+	_place_button(fire_button, fire_size, Vector2(-margin - fire_size.x, -margin - fire_size.y))
+	_place_button(reload_button, action_size, Vector2(-margin - fire_size.x - gap - action_size.x, -margin - action_size.y))
+	_place_button(jump_button, action_size, Vector2(-margin - fire_size.x, -margin - fire_size.y - gap - action_size.y))
+	_place_button(sprint_button, action_size, Vector2(-margin - fire_size.x - gap - action_size.x, -margin - fire_size.y - gap - action_size.y))
+	queue_redraw()
+
+func _place_button(button: Button, button_size: Vector2, offset: Vector2) -> void:
+	button.anchor_left = 1.0
+	button.anchor_top = 1.0
+	button.anchor_right = 1.0
+	button.anchor_bottom = 1.0
+	button.size = button_size
+	button.position = offset
+	button.add_theme_font_size_override("font_size", roundi(17.0 * ui_scale))
 
 func _button_style(color: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
@@ -123,7 +149,7 @@ func _input(event: InputEvent) -> void:
 				look_pointer = -1
 	elif event is InputEventScreenDrag:
 		if event.index == move_pointer:
-			joystick = ((event.position - move_origin) / JOYSTICK_RADIUS).limit_length(1.0)
+			joystick = ((event.position - move_origin) / joystick_radius).limit_length(1.0)
 			if is_instance_valid(player_ref):
 				player_ref.call("set_mobile_move", joystick)
 			queue_redraw()
@@ -131,9 +157,9 @@ func _input(event: InputEvent) -> void:
 			player_ref.call("add_mobile_look", event.relative)
 
 func _draw() -> void:
-	var center := move_origin if move_pointer != -1 else Vector2(112, size.y - 122)
-	draw_circle(center, JOYSTICK_RADIUS, Color(0.02, 0.04, 0.03, 0.28))
-	draw_arc(center, JOYSTICK_RADIUS, 0, TAU, 48, Color(0.82, 0.88, 0.78, 0.52), 3.0)
-	var knob := center + joystick * JOYSTICK_RADIUS * 0.62
-	draw_circle(knob, 29, Color(0.72, 0.82, 0.68, 0.38))
-	draw_arc(knob, 29, 0, TAU, 32, Color(0.92, 0.96, 0.88, 0.72), 2.0)
+	var center := move_origin if move_pointer != -1 else Vector2(112.0 * ui_scale, size.y - 122.0 * ui_scale)
+	draw_circle(center, joystick_radius, Color(0.02, 0.04, 0.03, 0.28))
+	draw_arc(center, joystick_radius, 0, TAU, 48, Color(0.82, 0.88, 0.78, 0.52), 3.0 * ui_scale)
+	var knob := center + joystick * joystick_radius * 0.62
+	draw_circle(knob, 29.0 * ui_scale, Color(0.72, 0.82, 0.68, 0.38))
+	draw_arc(knob, 29.0 * ui_scale, 0, TAU, 32, Color(0.92, 0.96, 0.88, 0.72), 2.0 * ui_scale)
