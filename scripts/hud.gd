@@ -4,6 +4,7 @@ signal fire_requested
 signal reload_requested
 signal jump_requested
 signal sprint_changed(active: bool)
+signal sit_requested
 
 const BASE_BUTTON_SIZE := Vector2(92, 64)
 const BASE_FIRE_SIZE := Vector2(108, 78)
@@ -20,6 +21,7 @@ var fire_button: Button
 var reload_button: Button
 var jump_button: Button
 var sprint_button: Button
+var sit_button: Button
 var move_origin := Vector2.ZERO
 var move_pointer := -1
 var look_pointer := -1
@@ -90,6 +92,8 @@ func _build_hud() -> void:
 		sprint_active = false
 		sprint_changed.emit(false)
 	)
+	sit_button = _make_button("SIT")
+	sit_button.pressed.connect(func(): sit_requested.emit())
 
 func _make_button(label: String) -> Button:
 	var button := Button.new()
@@ -131,6 +135,7 @@ func _layout_hud() -> void:
 	_place_button(reload_button, action_size, Vector2(-margin - fire_size.x - gap - action_size.x, -margin - action_size.y))
 	_place_button(jump_button, action_size, Vector2(-margin - fire_size.x, -margin - fire_size.y - gap - action_size.y))
 	_place_button(sprint_button, action_size, Vector2(-margin - fire_size.x - gap - action_size.x, -margin - fire_size.y - gap - action_size.y))
+	_place_button(sit_button, action_size, Vector2(-margin - fire_size.x, -margin - fire_size.y - 2.0 * (gap + action_size.y)))
 	queue_redraw()
 
 func _place_button(button: Button, button_size: Vector2, offset: Vector2) -> void:
@@ -165,7 +170,7 @@ func set_status(health: int, zombie_count: int, ammo: int, reserve: int, reloadi
 		health_bar_fill.color = Color(0.28, 0.78, 0.38, 0.95) if ratio > 0.5 else (Color(0.95, 0.68, 0.18, 0.95) if ratio > 0.25 else Color(0.92, 0.24, 0.20, 0.98))
 
 func _is_over_action_button(point: Vector2) -> bool:
-	for button in [fire_button, reload_button, jump_button, sprint_button]:
+	for button in [fire_button, reload_button, jump_button, sprint_button, sit_button]:
 		if is_instance_valid(button) and button.get_global_rect().has_point(point):
 			return true
 	return false
