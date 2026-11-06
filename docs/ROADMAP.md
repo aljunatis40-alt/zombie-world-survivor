@@ -31,9 +31,11 @@
 - [ ] Add inventory, equipment, save/load, and mission tracking
 
 ## Audio and atmosphere
-- [ ] Add coordinated sound effects for footsteps by surface, jumps, landings, movement, weapons, reloads, impacts, vehicles, doors, weather, and interactions
+- [x] Add initial offline synthesized sound effects for footsteps, jump, landing, weapon fire, reload, zombie attack, hit, and defeat
+- [ ] Expand coordinated sound effects by surface, vehicles, doors, weather, and interactions
 - [ ] Add varied zombie vocalizations, ambient world audio, music, and optional Filipino voice lines
-- [ ] Include all required audio assets in the offline game build and verify playback on Android
+- [x] Generate initial sound effects locally at runtime so they are included in offline builds
+- [ ] Verify sound levels, overlap, and playback on a physical Android device
 - [ ] Add day, afternoon, sunset, night, rain, and changing weather with matching lighting, ambience, and shadows
 
 ## Mobile UI, settings, and performance
