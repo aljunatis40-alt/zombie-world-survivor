@@ -45,6 +45,7 @@ func _ready() -> void:
 		zombie.connect("attacked", func(): _play_sound("zombie"))
 		zombie.connect("hit_received", func(): _play_sound("hit"))
 		zombies.append(zombie)
+	_validate_mesh_instances(self)
 
 func _on_zombie_died(zombie: Node3D) -> void:
 	_play_sound("zombie_down")
@@ -257,3 +258,10 @@ func _add_box(label: String, pos: Vector3, size: Vector3, color: Color) -> MeshI
 		body.add_child(mesh)
 		world_root.add_child(body)
 	return mesh
+
+
+func _validate_mesh_instances(node: Node) -> void:
+	for child in node.get_children():
+		if child is MeshInstance3D and child.mesh == null:
+			push_error("NULL_MESH: %s has no mesh resource" % child.get_path())
+		_validate_mesh_instances(child)
