@@ -44,7 +44,7 @@ func _on_zombie_died(zombie: Node3D) -> void:
 
 func _process(_delta: float) -> void:
 	if is_instance_valid(hud) and is_instance_valid(player):
-		hud.set_status(int(player.get("health")), zombies.size(), magazine_ammo, reserve_ammo)
+		hud.set_status(int(player.get("health")), zombies.size(), magazine_ammo, reserve_ammo, is_reloading)
 
 func _on_jump_requested() -> void:
 	if is_instance_valid(player):
@@ -58,6 +58,9 @@ func _on_reload_requested() -> void:
 	if is_reloading or magazine_ammo >= 12 or reserve_ammo <= 0:
 		return
 	is_reloading = true
+	await get_tree().create_timer(1.25).timeout
+	if not is_inside_tree():
+		return
 	var needed := 12 - magazine_ammo
 	var loaded := mini(needed, reserve_ammo)
 	magazine_ammo += loaded
@@ -65,7 +68,7 @@ func _on_reload_requested() -> void:
 	is_reloading = false
 
 func _on_fire_requested() -> void:
-	if not is_instance_valid(player) or magazine_ammo <= 0:
+	if is_reloading or not is_instance_valid(player) or magazine_ammo <= 0:
 		return
 	magazine_ammo -= 1
 	var camera: Camera3D = player.get("camera")
@@ -120,6 +123,18 @@ func _add_box(label: String, pos: Vector3, size: Vector3, color: Color) -> MeshI
 	material.albedo_color = color
 	material.roughness = 0.92
 	mesh.material_override = material
-	mesh.position = pos
-	world_root.add_child(mesh)
+	if label == "RoadMarking":
+		mesh.position = pos
+		world_root.add_child(mesh)
+	else:
+		var body := StaticBody3D.new()
+		body.name = label + "Collision"
+		body.position = pos
+		var collision := CollisionShape3D.new()
+		var collision_shape := BoxShape3D.new()
+		collision_shape.size = size
+		collision.shape = collision_shape
+		body.add_child(collision)
+		body.add_child(mesh)
+		world_root.add_child(body)
 	return mesh
