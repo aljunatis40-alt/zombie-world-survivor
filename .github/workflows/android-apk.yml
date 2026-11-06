@@ -72,6 +72,14 @@ jobs:
       - name: Import and validate project
         run: godot --headless --path . --editor --quit
 
+      - name: Diagnose Android export configuration
+        run: |
+          echo "=== Android export preset ==="
+          cat export_presets.cfg
+          echo "=== Android texture compression setting ==="
+          grep -n "import_etc2_astc" project.godot
+          test "$(grep -c 'textures/vram_compression/import_etc2_astc=true' project.godot)" -eq 1
+
       - name: Create temporary debug signing key
         run: |
           mkdir -p "$HOME/.android"
