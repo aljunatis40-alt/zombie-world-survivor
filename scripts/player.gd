@@ -73,12 +73,12 @@ func _build_survivor_visual() -> void:
 	_add_sphere(right_arm_pivot, "Hand", 0.105, Vector3(0, -0.66, 0), skin)
 	for finger in range(4):
 		_add_capsule(right_arm_pivot, "Finger_%d" % finger, 0.022, 0.105, Vector3(-0.06 + finger * 0.04, -0.75, -0.025), skin)
-	left_leg_pivot = _make_limb_pivot("LeftLeg", Vector3(-0.16, -0.28, 0))
-	right_leg_pivot = _make_limb_pivot("RightLeg", Vector3(0.16, -0.28, 0))
+	left_leg_pivot = _make_limb_pivot("LeftLeg", Vector3(-0.16, -0.22, 0))
+	right_leg_pivot = _make_limb_pivot("RightLeg", Vector3(0.16, -0.22, 0))
 	visual.add_child(left_leg_pivot)
 	visual.add_child(right_leg_pivot)
-	_add_capsule(left_leg_pivot, "Trouser", 0.14, 0.78, Vector3(0, -0.34, 0), pants)
-	_add_box(left_leg_pivot, "Boot", Vector3(0.23, 0.17, 0.34), Vector3(0, -0.77, -0.055), boots)
+	_add_capsule(left_leg_pivot, "Trouser", 0.14, 0.62, Vector3(0, -0.30, 0), pants)
+	_add_box(left_leg_pivot, "Boot", Vector3(0.23, 0.17, 0.34), Vector3(0, -0.56, -0.055), boots)
 	_add_capsule(right_leg_pivot, "Trouser", 0.14, 0.78, Vector3(0, -0.34, 0), pants)
 	_add_box(right_leg_pivot, "Boot", Vector3(0.23, 0.17, 0.34), Vector3(0, -0.77, -0.055), boots)
 
