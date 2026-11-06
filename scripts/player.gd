@@ -23,15 +23,20 @@ var jump_queued := false
 var animation_clock := 0.0
 var footstep_timer := 0.0
 var seated := false
+var crouched := false
+var movement_state := "IDLE"
+var collision_shape: CollisionShape3D
+var standing_capsule_height := 1.8
+var crouched_capsule_height := 1.22
 
 func _ready() -> void:
 	add_to_group("player")
-	var collision := CollisionShape3D.new()
+	collision_shape = CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.42
-	capsule.height = 1.8
-	collision.shape = capsule
-	add_child(collision)
+	capsule.height = standing_capsule_height
+	collision_shape.shape = capsule
+	add_child(collision_shape)
 	_build_survivor_visual()
 	camera_pivot = Node3D.new()
 	camera_pivot.position = Vector3(0, 1.35, 0)
@@ -157,8 +162,22 @@ func set_mobile_sprint(active: bool) -> void:
 	mobile_sprint = active
 
 func request_jump() -> void:
-	if not seated:
+	if not seated and not crouched:
 		jump_queued = true
+
+func set_crouched(active: bool) -> void:
+	if seated:
+		return
+	crouched = active
+	if is_instance_valid(collision_shape) and collision_shape.shape is CapsuleShape3D:
+		var capsule := collision_shape.shape as CapsuleShape3D
+		capsule.height = crouched_capsule_height if crouched else standing_capsule_height
+	if is_instance_valid(visual):
+		visual.scale.y = 0.78 if crouched else 1.0
+		visual.position.y = -0.12 if crouched else 0.0
+	if crouched:
+		mobile_sprint = false
+		jump_queued = false
 
 func set_seated(active: bool) -> void:
 	seated = active
@@ -203,8 +222,18 @@ func _physics_process(delta: float) -> void:
 	direction.y = 0
 	direction = direction.normalized()
 	var is_moving := direction.length() > 0.1
-	var is_sprinting := mobile_sprint or Input.is_action_pressed("sprint")
-	var speed := sprint_speed if is_sprinting else walk_speed
+	var is_sprinting := (mobile_sprint or Input.is_action_pressed("sprint")) and not crouched
+	var speed := (walk_speed * 0.48) if crouched else (sprint_speed if is_sprinting else walk_speed)
+	if not is_on_floor():
+		movement_state = "JUMP"
+	elif crouched:
+		movement_state = "CROUCH"
+	elif is_moving and is_sprinting:
+		movement_state = "SPRINT"
+	elif is_moving:
+		movement_state = "WALK"
+	else:
+		movement_state = "IDLE"
 	velocity.x = move_toward(velocity.x, direction.x * speed, acceleration * delta)
 	velocity.z = move_toward(velocity.z, direction.z * speed, acceleration * delta)
 	if not is_on_floor():
@@ -217,8 +246,8 @@ func _physics_process(delta: float) -> void:
 	jump_queued = false
 	if is_moving:
 		visual.rotation.y = lerp_angle(visual.rotation.y, atan2(-direction.x, -direction.z), delta * 10.0)
-	animation_clock += delta * (10.0 if is_sprinting else 7.0)
-	var swing := sin(animation_clock) * (0.72 if is_moving else 0.04)
+	animation_clock += delta * (10.0 if is_sprinting else (4.0 if crouched else 7.0))
+	var swing := sin(animation_clock) * (0.34 if crouched and is_moving else (0.72 if is_moving else 0.04))
 	if is_instance_valid(left_arm_pivot):
 		left_arm_pivot.rotation.x = lerpf(left_arm_pivot.rotation.x, swing, delta * 9.0)
 		right_arm_pivot.rotation.x = lerpf(right_arm_pivot.rotation.x, -swing, delta * 9.0)
