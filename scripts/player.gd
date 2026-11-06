@@ -51,6 +51,14 @@ func _build_survivor_visual() -> void:
 	var boots := _material(Color(0.075, 0.065, 0.055))
 	_add_capsule(visual, "Jacket", 0.29, 0.88, Vector3(0, 0.12, 0), clothing)
 	_add_sphere(visual, "Head", 0.225, Vector3(0, 0.78, 0), skin)
+	_add_sphere(visual, "LeftEar", 0.065, Vector3(-0.215, 0.79, 0), skin)
+	_add_sphere(visual, "RightEar", 0.065, Vector3(0.215, 0.79, 0), skin)
+	_add_sphere(visual, "Nose", 0.045, Vector3(0, 0.765, -0.225), skin)
+	_add_sphere(visual, "LeftEyeWhite", 0.037, Vector3(-0.078, 0.825, -0.194), _material(Color(0.96, 0.94, 0.86)))
+	_add_sphere(visual, "RightEyeWhite", 0.037, Vector3(0.078, 0.825, -0.194), _material(Color(0.96, 0.94, 0.86)))
+	_add_sphere(visual, "LeftIris", 0.018, Vector3(-0.078, 0.825, -0.226), _material(Color(0.12, 0.22, 0.19)))
+	_add_sphere(visual, "RightIris", 0.018, Vector3(0.078, 0.825, -0.226), _material(Color(0.12, 0.22, 0.19)))
+	_add_box(visual, "Mouth", Vector3(0.075, 0.018, 0.018), Vector3(0, 0.69, -0.216), _material(Color(0.22, 0.08, 0.07)))
 	_add_sphere(visual, "Hair", 0.23, Vector3(0, 0.91, 0.015), _material(Color(0.12, 0.095, 0.075)))
 	_add_capsule(visual, "Neck", 0.095, 0.22, Vector3(0, 0.61, 0), skin)
 	left_arm_pivot = _make_limb_pivot("LeftArm", Vector3(-0.34, 0.40, 0))
@@ -59,8 +67,12 @@ func _build_survivor_visual() -> void:
 	visual.add_child(right_arm_pivot)
 	_add_capsule(left_arm_pivot, "Sleeve", 0.115, 0.68, Vector3(0, -0.29, 0), clothing)
 	_add_sphere(left_arm_pivot, "Hand", 0.105, Vector3(0, -0.66, 0), skin)
+	for finger in range(4):
+		_add_capsule(left_arm_pivot, "Finger_%d" % finger, 0.022, 0.105, Vector3(-0.06 + finger * 0.04, -0.75, -0.025), skin)
 	_add_capsule(right_arm_pivot, "Sleeve", 0.115, 0.68, Vector3(0, -0.29, 0), clothing)
 	_add_sphere(right_arm_pivot, "Hand", 0.105, Vector3(0, -0.66, 0), skin)
+	for finger in range(4):
+		_add_capsule(right_arm_pivot, "Finger_%d" % finger, 0.022, 0.105, Vector3(-0.06 + finger * 0.04, -0.75, -0.025), skin)
 	left_leg_pivot = _make_limb_pivot("LeftLeg", Vector3(-0.16, -0.28, 0))
 	right_leg_pivot = _make_limb_pivot("RightLeg", Vector3(0.16, -0.28, 0))
 	visual.add_child(left_leg_pivot)
@@ -139,10 +151,10 @@ func _physics_process(delta: float) -> void:
 	var was_on_floor := is_on_floor()
 	var input_dir := Vector2(
 		Input.get_action_strength("move_right") - Input.get_action_strength("move_left"),
-		Input.get_action_strength("move_back") - Input.get_action_strength("move_forward")
+		Input.get_action_strength("move_forward") - Input.get_action_strength("move_back")
 	)
 	if move_touch.length() > 0.05:
-		input_dir = move_touch
+		input_dir = Vector2(move_touch.x, -move_touch.y)
 	var forward := -camera_pivot.global_transform.basis.z
 	var right := camera_pivot.global_transform.basis.x
 	var direction := (right * input_dir.x + forward * input_dir.y)
@@ -162,7 +174,7 @@ func _physics_process(delta: float) -> void:
 			jumped.emit()
 	jump_queued = false
 	if is_moving:
-		visual.rotation.y = lerp_angle(visual.rotation.y, atan2(direction.x, direction.z), delta * 10.0)
+		visual.rotation.y = lerp_angle(visual.rotation.y, atan2(-direction.x, -direction.z), delta * 10.0)
 	animation_clock += delta * (10.0 if is_sprinting else 7.0)
 	var swing := sin(animation_clock) * (0.72 if is_moving else 0.04)
 	if is_instance_valid(left_arm_pivot):
