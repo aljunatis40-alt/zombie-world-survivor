@@ -17,10 +17,13 @@ var left_leg: Node3D
 var right_leg: Node3D
 var animation_clock := 0.0
 var hit_flash := 0.0
+var personal_speed := 1.0
 
 func _ready() -> void:
 	add_to_group("zombies")
 	health = max_health
+	personal_speed = 0.92 + float(int(get_instance_id()) % 19) * 0.01
+	move_speed *= personal_speed
 	var collision := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.48
@@ -39,6 +42,8 @@ func _build_zombie_visual() -> void:
 	var dark := _material(Color(0.09, 0.12, 0.08))
 	var eye_material := _material(Color(0.82, 0.48, 0.16))
 	_add_capsule(visual, "Torso", 0.30, 0.91, Vector3(0, 0.10, 0), body_material)
+	_add_box(visual, "TornShirtPatch", Vector3(0.18, 0.24, 0.06), Vector3(-0.20, 0.24, -0.22), torn_clothes)
+	_add_box(visual, "UtilityBelt", Vector3(0.54, 0.12, 0.34), Vector3(0, -0.30, 0), dark)
 	_add_sphere(visual, "Head", 0.235, Vector3(0, 0.78, 0), skin)
 	_add_sphere(visual, "LeftEar", 0.06, Vector3(-0.22, 0.79, 0), skin)
 	_add_sphere(visual, "RightEar", 0.06, Vector3(0.22, 0.79, 0), skin)
@@ -128,8 +133,9 @@ func _physics_process(delta: float) -> void:
 	var is_attacking := distance <= 1.45
 	if not is_attacking:
 		var direction := to_player.normalized()
-		velocity.x = direction.x * move_speed
-		velocity.z = direction.z * move_speed
+		var chase_speed := move_speed * (1.38 if distance < 10.0 else 1.0)
+		velocity.x = direction.x * chase_speed
+		velocity.z = direction.z * chase_speed
 		visual.rotation.y = lerp_angle(visual.rotation.y, atan2(-direction.x, -direction.z), delta * 7.0)
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, move_speed * 5.0 * delta)
