@@ -21,6 +21,7 @@ var mobile_sprint := false
 var jump_queued := false
 var animation_clock := 0.0
 var footstep_timer := 0.0
+var seated := false
 
 func _ready() -> void:
 	add_to_group("player")
@@ -73,6 +74,10 @@ func _build_survivor_visual() -> void:
 	_add_sphere(right_arm_pivot, "Hand", 0.105, Vector3(0, -0.66, 0), skin)
 	for finger in range(4):
 		_add_capsule(right_arm_pivot, "Finger_%d" % finger, 0.022, 0.105, Vector3(-0.06 + finger * 0.04, -0.75, -0.025), skin)
+	# Visible compact sidearm held in the survivor's right hand.
+	_add_box(right_arm_pivot, "PistolGrip", Vector3(0.105, 0.22, 0.12), Vector3(0, -0.61, -0.13), _material(Color(0.075, 0.085, 0.08)))
+	_add_box(right_arm_pivot, "PistolSlide", Vector3(0.13, 0.12, 0.34), Vector3(0, -0.55, -0.31), _material(Color(0.16, 0.18, 0.17)))
+	_add_box(right_arm_pivot, "PistolBarrel", Vector3(0.07, 0.065, 0.15), Vector3(0, -0.55, -0.53), _material(Color(0.045, 0.05, 0.05)))
 	left_leg_pivot = _make_limb_pivot("LeftLeg", Vector3(-0.16, -0.22, 0))
 	right_leg_pivot = _make_limb_pivot("RightLeg", Vector3(0.16, -0.22, 0))
 	visual.add_child(left_leg_pivot)
@@ -141,13 +146,39 @@ func set_mobile_sprint(active: bool) -> void:
 	mobile_sprint = active
 
 func request_jump() -> void:
-	jump_queued = true
+	if not seated:
+		jump_queued = true
+
+func set_seated(active: bool) -> void:
+	seated = active
+	if not is_instance_valid(visual):
+		return
+	if seated:
+		move_touch = Vector2.ZERO
+		mobile_sprint = false
+		jump_queued = false
+		velocity = Vector3.ZERO
+		visual.position.y = -0.34
+		left_leg_pivot.rotation.x = 1.18
+		right_leg_pivot.rotation.x = 1.18
+		left_arm_pivot.rotation.x = -0.18
+		right_arm_pivot.rotation.x = -0.18
+	else:
+		visual.position.y = 0.0
+		left_leg_pivot.rotation.x = 0.0
+		right_leg_pivot.rotation.x = 0.0
+		left_arm_pivot.rotation.x = 0.0
+		right_arm_pivot.rotation.x = 0.0
 
 func add_mobile_look(value: Vector2) -> void:
 	camera_pivot.rotate_y(-value.x * 0.006)
 	camera.rotation.x = clamp(camera.rotation.x - value.y * 0.006, -0.75, 0.25)
 
 func _physics_process(delta: float) -> void:
+	if seated:
+		velocity = Vector3.ZERO
+		move_and_slide()
+		return
 	var was_on_floor := is_on_floor()
 	var input_dir := Vector2(
 		Input.get_action_strength("move_right") - Input.get_action_strength("move_left"),
