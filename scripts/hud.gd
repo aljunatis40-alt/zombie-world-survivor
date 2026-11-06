@@ -15,6 +15,7 @@ var health_bar_bg: ColorRect
 var health_bar_fill: ColorRect
 var hint_label: Label
 var objective_label: Label
+var objective_nav_label: Label
 var fire_button: Button
 var reload_button: Button
 var jump_button: Button
@@ -59,6 +60,15 @@ func _build_hud() -> void:
 	objective_label.add_theme_constant_override("shadow_offset_x", 2)
 	objective_label.add_theme_constant_override("shadow_offset_y", 2)
 	add_child(objective_label)
+
+	objective_nav_label = Label.new()
+	objective_nav_label.text = "SUPPLY CRATE  ↑  35m"
+	objective_nav_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	objective_nav_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.43, 0.98))
+	objective_nav_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.95))
+	objective_nav_label.add_theme_constant_override("shadow_offset_x", 2)
+	objective_nav_label.add_theme_constant_override("shadow_offset_y", 2)
+	add_child(objective_nav_label)
 
 	hint_label = Label.new()
 	hint_label.text = "MOVE"
@@ -110,6 +120,9 @@ func _layout_hud() -> void:
 	objective_label.position = Vector2(margin, margin * 3.45)
 	objective_label.add_theme_font_size_override("font_size", roundi(16.0 * ui_scale))
 	objective_label.size = Vector2(size.x * 0.72, 34.0 * ui_scale)
+	objective_nav_label.position = Vector2(size.x * 0.36, margin * 0.8)
+	objective_nav_label.size = Vector2(size.x * 0.28, 34.0 * ui_scale)
+	objective_nav_label.add_theme_font_size_override("font_size", roundi(19.0 * ui_scale))
 	hint_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	hint_label.position = Vector2(margin + 8.0 * ui_scale, -margin - 94.0 * ui_scale)
 	hint_label.add_theme_font_size_override("font_size", roundi(14.0 * ui_scale))
@@ -199,3 +212,14 @@ func _draw() -> void:
 	draw_line(aim_center + Vector2(0, -13) * ui_scale, aim_center + Vector2(0, -5) * ui_scale, reticle_color, 2.0 * ui_scale)
 	draw_line(aim_center + Vector2(0, 5) * ui_scale, aim_center + Vector2(0, 13) * ui_scale, reticle_color, 2.0 * ui_scale)
 	draw_circle(aim_center, 1.8 * ui_scale, reticle_color)
+
+func set_objective_navigation(local_direction: Vector3, distance: float) -> void:
+	if not is_instance_valid(objective_nav_label):
+		return
+	var arrow := "↑"
+	if absf(local_direction.x) > absf(local_direction.z):
+		arrow = "→" if local_direction.x > 0.0 else "←"
+	elif local_direction.z > 0.0:
+		arrow = "↓"
+	var distance_text := "REACHED" if distance < 2.5 else "%dm" % roundi(distance)
+	objective_nav_label.text = "SUPPLY CRATE  %s  %s" % [arrow, distance_text]
