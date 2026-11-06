@@ -1,5 +1,9 @@
 extends CharacterBody3D
 
+signal footstep
+signal jumped
+signal landed
+
 @export var walk_speed := 5.2
 @export var sprint_speed := 8.0
 @export var acceleration := 18.0
@@ -16,6 +20,7 @@ var move_touch := Vector2.ZERO
 var mobile_sprint := false
 var jump_queued := false
 var animation_clock := 0.0
+var footstep_timer := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -131,6 +136,7 @@ func add_mobile_look(value: Vector2) -> void:
 	camera.rotation.x = clamp(camera.rotation.x - value.y * 0.006, -0.75, 0.25)
 
 func _physics_process(delta: float) -> void:
+	var was_on_floor := is_on_floor()
 	var input_dir := Vector2(
 		Input.get_action_strength("move_right") - Input.get_action_strength("move_left"),
 		Input.get_action_strength("move_back") - Input.get_action_strength("move_forward")
@@ -153,6 +159,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y = -0.5
 		if jump_queued:
 			velocity.y = 7.0
+			jumped.emit()
 	jump_queued = false
 	if is_moving:
 		visual.rotation.y = lerp_angle(visual.rotation.y, atan2(direction.x, direction.z), delta * 10.0)
@@ -164,6 +171,15 @@ func _physics_process(delta: float) -> void:
 		left_leg_pivot.rotation.x = lerpf(left_leg_pivot.rotation.x, -swing, delta * 9.0)
 		right_leg_pivot.rotation.x = lerpf(right_leg_pivot.rotation.x, swing, delta * 9.0)
 	move_and_slide()
+	if not was_on_floor and is_on_floor():
+		landed.emit()
+	if is_moving and is_on_floor():
+		footstep_timer -= delta
+		if footstep_timer <= 0.0:
+			footstep.emit()
+			footstep_timer = 0.34 if is_sprinting else 0.48
+	else:
+		footstep_timer = minf(footstep_timer, 0.08)
 
 func apply_damage(amount: int) -> void:
 	health = maxi(0, health - amount)
