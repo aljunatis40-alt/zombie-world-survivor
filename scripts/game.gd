@@ -174,14 +174,14 @@ func _build_environment() -> void:
 	world_root = Node3D.new()
 	world_root.name = "AbandonedDistrict"
 	add_child(world_root)
-	_add_box("DistrictGround", Vector3(0, -0.35, 0), Vector3(270, 0.5, 270), Color(0.20, 0.22, 0.18))
-	_add_box("MainRoad", Vector3(0, -0.055, 0), Vector3(12, 0.12, 270), Color(0.105, 0.12, 0.125))
-	_add_box("CrossRoad", Vector3(0, -0.05, 0), Vector3(270, 0.12, 12), Color(0.105, 0.12, 0.125))
+	_add_box("DistrictGround", Vector3(0, -0.35, 0), Vector3(5400, 0.5, 5400), Color(0.20, 0.22, 0.18))
+	_add_box("MainRoad", Vector3(0, -0.055, 0), Vector3(12, 0.12, 5400), Color(0.105, 0.12, 0.125))
+	_add_box("CrossRoad", Vector3(0, -0.05, 0), Vector3(5400, 0.12, 12), Color(0.105, 0.12, 0.125))
 	for side in [-1, 1]:
-		_add_box("MainSidewalk", Vector3(side * 7.4, 0.02, 0), Vector3(2.6, 0.18, 270), Color(0.39, 0.39, 0.34))
-		_add_box("CrossSidewalk", Vector3(0, 0.025, side * 7.4), Vector3(270, 0.18, 2.6), Color(0.39, 0.39, 0.34))
-		_add_box("RoadEdgeLine", Vector3(side * 5.8, 0.025, 0), Vector3(0.12, 0.025, 90), Color(0.78, 0.72, 0.52))
-	for z_mark in range(-130, 131, 8):
+		_add_box("MainSidewalk", Vector3(side * 7.4, 0.02, 0), Vector3(2.6, 0.18, 5400), Color(0.39, 0.39, 0.34))
+		_add_box("CrossSidewalk", Vector3(0, 0.025, side * 7.4), Vector3(5400, 0.18, 2.6), Color(0.39, 0.39, 0.34))
+		_add_box("RoadEdgeLine", Vector3(side * 5.8, 0.025, 0), Vector3(0.12, 0.025, 5400), Color(0.78, 0.72, 0.52))
+	for z_mark in range(-2700, 2701, 45):
 		_add_box("LaneDash", Vector3(0, 0.025, float(z_mark)), Vector3(0.18, 0.025, 3.2), Color(0.83, 0.78, 0.61))
 	for cross_mark in range(-4, 5):
 		_add_box("CrosswalkStripe", Vector3(float(cross_mark) * 1.15, 0.035, -6.2), Vector3(0.68, 0.035, 1.0), Color(0.82, 0.81, 0.72))
@@ -196,18 +196,17 @@ func _build_environment() -> void:
 				var building := _add_box("AbandonedBuilding", building_pos, Vector3(8, building_height, 8), Color(0.24 + n * 0.025, 0.25, 0.24))
 				building.rotation.y = float(n) * 0.17
 				_decorate_building(building, building_height, n)
-	for i in range(78):
-		var tree_pos := Vector3(randf_range(-128, 128), 1.5, randf_range(-42, 42))
+	for i in range(64):
+		var tree_pos := Vector3(randf_range(-2650, 2650), 1.5, randf_range(-2650, 2650))
 		var tree := _add_box("DeadTreeTrunk", tree_pos, Vector3(0.45, 3, 0.45), Color(0.18, 0.14, 0.1))
 		tree.rotation.z = randf_range(-0.12, 0.12)
 		var canopy := _detail_box(tree, "DeadBranch", Vector3(0.18, 2.0, 0.18), Vector3(0, 1.65, 0), Color(0.16, 0.13, 0.10))
 		canopy.rotation.z = randf_range(-0.65, 0.65)
-	for i in range(24):
-		var lamp_x := -120.0 + float(i) * 10.0
+	for i in range(10):
+		var lamp_x := -2250.0 + float(i) * 500.0
 		_add_street_lamp(Vector3(lamp_x, 0, -5.5))
-		_add_street_lamp(Vector3(lamp_x, 0, 5.5))
-	for i in range(32):
-		var debris_pos := Vector3(randf_range(-125, 125), 0.22, randf_range(-125, 125))
+	for i in range(40):
+		var debris_pos := Vector3(randf_range(-2650, 2650), 0.22, randf_range(-2650, 2650))
 		var debris := _add_box("StreetDebris", debris_pos, Vector3(randf_range(0.35, 1.2), 0.4, randf_range(0.3, 0.9)), Color(0.28, 0.25, 0.19))
 		debris.rotation.y = randf_range(0, TAU)
 	_build_outer_districts()
@@ -217,33 +216,41 @@ func _build_environment() -> void:
 
 
 func _build_extended_road_network() -> void:
-	# Three parallel avenues in each direction connect the enlarged 270m district.
-	for offset in [-90.0, -45.0, 45.0, 90.0]:
-		_add_box("NorthSouthStreet", Vector3(offset, -0.045, 0), Vector3(8.0, 0.10, 270.0), Color(0.13, 0.145, 0.15))
-		_add_box("EastWestStreet", Vector3(0, -0.04, offset), Vector3(270.0, 0.10, 8.0), Color(0.13, 0.145, 0.15))
+	# Open-world grid: 5.4km avenues with wide blocks and fewer visual markings.
+	for offset_i in range(-2250, 2251, 450):
+		if offset_i == 0:
+			continue
+		var offset := float(offset_i)
+		_add_box("NorthSouthStreet", Vector3(offset, -0.045, 0), Vector3(8.0, 0.10, 5400.0), Color(0.13, 0.145, 0.15))
+		_add_box("EastWestStreet", Vector3(0, -0.04, offset), Vector3(5400.0, 0.10, 8.0), Color(0.13, 0.145, 0.15))
 		for side in [-1.0, 1.0]:
-			_add_box("StreetCurb", Vector3(offset + side * 4.3, 0.015, 0), Vector3(0.22, 0.16, 270.0), Color(0.42, 0.42, 0.37))
-			_add_box("StreetCurb", Vector3(0, 0.015, offset + side * 4.3), Vector3(270.0, 0.16, 0.22), Color(0.42, 0.42, 0.37))
-	for mark in range(-128, 129, 12):
-		for offset in [-90.0, -45.0, 45.0, 90.0]:
-			_detail_box(world_root, "AvenueLaneDash", Vector3(0.16, 0.035, 3.8), Vector3(offset, 0.035, float(mark)), Color(0.82, 0.76, 0.58))
-			_detail_box(world_root, "CrossAvenueLaneDash", Vector3(3.8, 0.035, 0.16), Vector3(float(mark), 0.035, offset), Color(0.82, 0.76, 0.58))
+			_add_box("StreetCurb", Vector3(offset + side * 4.3, 0.015, 0), Vector3(0.22, 0.16, 5400.0), Color(0.42, 0.42, 0.37))
+			_add_box("StreetCurb", Vector3(0, 0.015, offset + side * 4.3), Vector3(5400.0, 0.16, 0.22), Color(0.42, 0.42, 0.37))
+	for mark in range(-2700, 2701, 90):
+		_detail_box(world_root, "MainAvenueLaneDash", Vector3(0.16, 0.035, 5.0), Vector3(0, 0.035, float(mark)), Color(0.82, 0.76, 0.58))
+		_detail_box(world_root, "CrossAvenueLaneDash", Vector3(5.0, 0.035, 0.16), Vector3(float(mark), 0.035, 0), Color(0.82, 0.76, 0.58))
 
 func _build_outer_districts() -> void:
-	var block_centers: Array[Vector2] = [
-		Vector2(-65, -65), Vector2(65, -65), Vector2(-65, 65), Vector2(65, 65),
-		Vector2(-110, -65), Vector2(110, -65), Vector2(-110, 65), Vector2(110, 65),
-		Vector2(-65, -110), Vector2(65, -110), Vector2(-65, 110), Vector2(65, 110)
-	]
-	for i in range(block_centers.size()):
-		var center := block_centers[i]
-		var height := 7.0 + float(i % 4) * 2.2
-		var size := Vector3(10.0 + float(i % 3) * 2.0, height, 10.0 + float((i + 1) % 3) * 2.0)
-		var building := _add_box("OuterDistrictBuilding", Vector3(center.x, height * 0.5, center.y), size, Color(0.22 + float(i % 3) * 0.025, 0.24, 0.22))
-		building.rotation.y = float(i % 5) * 0.11
-		_detail_box(building, "OuterRoofRim", Vector3(size.x + 0.4, 0.24, size.z + 0.4), Vector3(0, height * 0.5, 0), Color(0.13, 0.15, 0.14))
-		_detail_box(building, "OuterRoofVent", Vector3(1.6, 0.8, 1.2), Vector3(2.0, height * 0.5 + 0.48, 1.5), Color(0.34, 0.36, 0.33))
-		_detail_box(building, "OuterDoor", Vector3(1.5, 2.2, 0.16), Vector3(0, -height * 0.5 + 1.1, -size.z * 0.5 - 0.09), Color(0.13, 0.11, 0.08))
+	# Fifty varied buildings across the expanded districts; broad spacing avoids a crowded skyline.
+	var building_index := 0
+	for grid_x in range(-2, 3):
+		for grid_z in range(-2, 3):
+			for lot in range(2):
+				var center_x := float(grid_x) * 900.0 + (180.0 if lot == 0 else -180.0)
+				var center_z := float(grid_z) * 900.0 + (150.0 if lot == 0 else -150.0)
+				if absf(center_x) < 250.0 and absf(center_z) < 250.0:
+					continue
+				var height := 8.0 + float(building_index % 5) * 3.2
+				var width := 16.0 + float(building_index % 4) * 4.0
+				var depth := 15.0 + float((building_index + 2) % 4) * 3.5
+				var size := Vector3(width, height, depth)
+				var center := Vector3(center_x, height * 0.5, center_z)
+				var building := _add_box("OuterDistrictBuilding_%02d" % building_index, center, size, Color(0.22 + float(building_index % 4) * 0.025, 0.24, 0.22))
+				building.rotation.y = float(building_index % 5) * 0.07
+				_detail_box(building, "OuterRoofRim", Vector3(size.x + 0.5, 0.30, size.z + 0.5), Vector3(0, height * 0.5, 0), Color(0.13, 0.15, 0.14))
+				_detail_box(building, "OuterRoofVent", Vector3(2.0, 1.0, 1.5), Vector3(2.0, height * 0.5 + 0.55, 1.5), Color(0.34, 0.36, 0.33))
+				_detail_box(building, "OuterDoor", Vector3(1.8, 2.5, 0.16), Vector3(0, -height * 0.5 + 1.25, -depth * 0.5 - 0.09), Color(0.13, 0.11, 0.08))
+				building_index += 1
 
 func _build_parked_vehicles() -> void:
 	var vehicle_spots: Array[Vector3] = [
@@ -287,8 +294,8 @@ func _on_sit_requested() -> void:
 
 func _build_park_and_shops() -> void:
 	# Small neighborhood park with walkways, benches and shade trees.
-	_add_box("NeighborhoodParkLawn", Vector3(65, -0.02, 0), Vector3(34, 0.12, 32), Color(0.16, 0.29, 0.16))
-	_add_box("ParkWalkway", Vector3(65, 0.055, 0), Vector3(3.0, 0.08, 30), Color(0.48, 0.46, 0.38))
+	_add_box("NeighborhoodParkLawn", Vector3(65, -0.02, 0), Vector3(54, 0.12, 48), Color(0.16, 0.29, 0.16))
+	_add_box("ParkWalkway", Vector3(65, 0.055, 0), Vector3(3.0, 0.08, 46), Color(0.48, 0.46, 0.38))
 	for bench_index in range(4):
 		var bench_pos := Vector3(54.0 + float(bench_index % 2) * 22.0, 0, -9.0 + float(bench_index / 2) * 18.0)
 		bench_positions.append(bench_pos)
@@ -301,7 +308,7 @@ func _build_park_and_shops() -> void:
 		var tree_pos := Vector3(65 + cos(angle) * 14.0, 1.4, sin(angle) * 13.0)
 		_add_box("ParkTreeTrunk", tree_pos, Vector3(0.55, 2.8, 0.55), Color(0.24, 0.16, 0.10))
 		_detail_box(world_root, "ParkTreeCanopy", Vector3(2.8, 3.0, 2.8), tree_pos + Vector3(0, 2.4, 0), Color(0.18, 0.31, 0.17))
-	for lamp_index in range(4):
+	for lamp_index in range(2):
 		_add_street_lamp(Vector3(51 + float(lamp_index % 2) * 28.0, 0, -12 + float(lamp_index / 2) * 24.0))
 	var park_sign := _detail_box(world_root, "ParkWelcomeSign", Vector3(5.5, 1.0, 0.18), Vector3(65, 2.2, -16.0), Color(0.10, 0.27, 0.16))
 	var park_label := Label3D.new()
