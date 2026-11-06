@@ -169,11 +169,68 @@ func _build_environment() -> void:
 	for x in [-1, 1]:
 		for z in [-1, 1]:
 			for n in range(3):
-				var building := _add_box("AbandonedBuilding", Vector3(x * (19 + n * 8), 3.0, z * (19 + n * 8)), Vector3(8, 6 + (n % 2) * 3, 8), Color(0.24 + n * 0.025, 0.25, 0.24))
+				var building_pos := Vector3(x * (19 + n * 8), 3.0, z * (19 + n * 8))
+				var building_height := 6.0 + float(n % 2) * 3.0
+				var building := _add_box("AbandonedBuilding", building_pos, Vector3(8, building_height, 8), Color(0.24 + n * 0.025, 0.25, 0.24))
 				building.rotation.y = float(n) * 0.17
+				_decorate_building(building, building_height, n)
 	for i in range(22):
-		var tree := _add_box("DeadTreeTrunk", Vector3(randf_range(-42, 42), 1.5, randf_range(-42, 42)), Vector3(0.45, 3, 0.45), Color(0.18, 0.14, 0.1))
+		var tree_pos := Vector3(randf_range(-42, 42), 1.5, randf_range(-42, 42))
+		var tree := _add_box("DeadTreeTrunk", tree_pos, Vector3(0.45, 3, 0.45), Color(0.18, 0.14, 0.1))
 		tree.rotation.z = randf_range(-0.12, 0.12)
+		var canopy := _detail_box(tree, "DeadBranch", Vector3(0.18, 2.0, 0.18), Vector3(0, 1.65, 0), Color(0.16, 0.13, 0.10))
+		canopy.rotation.z = randf_range(-0.65, 0.65)
+	for i in range(8):
+		var lamp_x := -35.0 + float(i) * 10.0
+		_add_street_lamp(Vector3(lamp_x, 0, -5.5))
+		_add_street_lamp(Vector3(lamp_x, 0, 5.5))
+	for i in range(7):
+		var debris_pos := Vector3(randf_range(-13, 13), 0.22, randf_range(-13, 13))
+		var debris := _add_box("StreetDebris", debris_pos, Vector3(randf_range(0.35, 1.2), 0.4, randf_range(0.3, 0.9)), Color(0.28, 0.25, 0.19))
+		debris.rotation.y = randf_range(0, TAU)
+
+func _decorate_building(building: MeshInstance3D, height: float, variant: int) -> void:
+	var glass_colors := [Color(0.10, 0.19, 0.22), Color(0.16, 0.24, 0.25), Color(0.22, 0.20, 0.16)]
+	var glass := glass_colors[variant % glass_colors.size()]
+	var frame := Color(0.12, 0.13, 0.12)
+	var facade := Color(0.32, 0.31, 0.27)
+	for floor_index in range(int(height / 3.0)):
+		var y := -height * 0.5 + 1.75 + float(floor_index) * 2.65
+		for column in range(3):
+			var x := -2.65 + float(column) * 2.65
+			_detail_box(building, "WindowFrame", Vector3(1.42, 1.35, 0.13), Vector3(x, y, -4.04), frame)
+			_detail_box(building, "BrokenWindowGlass", Vector3(1.18, 1.10, 0.06), Vector3(x, y, -4.12), glass)
+			_detail_box(building, "WindowSill", Vector3(1.58, 0.12, 0.22), Vector3(x, y - 0.72, -4.12), facade)
+			if (column + floor_index + variant) % 3 == 0:
+				_detail_box(building, "BoardedWindow", Vector3(1.22, 0.12, 0.08), Vector3(x, y, -4.19), Color(0.24, 0.17, 0.11))
+			_detail_box(building, "SideWindow", Vector3(0.12, 1.18, 1.35), Vector3(-4.04, y, x), frame)
+			_detail_box(building, "SideGlass", Vector3(0.06, 0.98, 1.12), Vector3(-4.12, y, x), glass)
+	_detail_box(building, "EntranceDoor", Vector3(1.45, 2.35, 0.16), Vector3(0, -height * 0.5 + 1.18, -4.08), Color(0.12, 0.10, 0.075))
+	_detail_box(building, "DoorPanel", Vector3(1.12, 1.85, 0.06), Vector3(0, -height * 0.5 + 1.18, -4.18), Color(0.25, 0.20, 0.14))
+	_detail_box(building, "RoofRim", Vector3(8.5, 0.28, 8.5), Vector3(0, height * 0.5 + 0.08, 0), Color(0.15, 0.16, 0.15))
+	_detail_box(building, "RooftopAC", Vector3(1.5, 0.8, 1.0), Vector3(2.3, height * 0.5 + 0.55, 1.8), Color(0.36, 0.37, 0.34))
+	_detail_box(building, "ACVent", Vector3(0.08, 0.48, 0.72), Vector3(1.52, height * 0.5 + 0.55, 1.8), Color(0.10, 0.12, 0.12))
+	_detail_box(building, "RooftopTank", Vector3(1.2, 1.0, 1.2), Vector3(-2.2, height * 0.5 + 0.55, -1.8), Color(0.22, 0.27, 0.25))
+
+func _detail_box(parent: Node3D, label: String, dimensions: Vector3, pos: Vector3, color: Color) -> MeshInstance3D:
+	var mesh := MeshInstance3D.new()
+	mesh.name = label
+	var shape := BoxMesh.new()
+	shape.size = dimensions
+	mesh.mesh = shape
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.9
+	mesh.material_override = material
+	mesh.position = pos
+	parent.add_child(mesh)
+	return mesh
+
+func _add_street_lamp(pos: Vector3) -> void:
+	var pole := _detail_box(world_root, "StreetLampPole", Vector3(0.16, 5.4, 0.16), pos + Vector3(0, 2.7, 0), Color(0.12, 0.14, 0.14))
+	_detail_box(world_root, "StreetLampArm", Vector3(1.3, 0.14, 0.14), pos + Vector3(0.55, 5.25, 0), Color(0.12, 0.14, 0.14))
+	_detail_box(world_root, "StreetLampHead", Vector3(0.62, 0.22, 0.42), pos + Vector3(1.12, 5.12, 0), Color(0.72, 0.63, 0.36))
+	pole.rotation.z = -0.02
 
 func _add_box(label: String, pos: Vector3, size: Vector3, color: Color) -> MeshInstance3D:
 	var mesh := MeshInstance3D.new()
