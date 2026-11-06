@@ -11,6 +11,8 @@ const LOOK_ZONE_RATIO := 0.48
 var joystick_radius := 68.0
 var ui_scale := 1.0
 var status_label: Label
+var health_bar_bg: ColorRect
+var health_bar_fill: ColorRect
 var hint_label: Label
 var fire_button: Button
 var reload_button: Button
@@ -41,6 +43,13 @@ func _build_hud() -> void:
 	status_label.add_theme_constant_override("shadow_offset_x", 2)
 	status_label.add_theme_constant_override("shadow_offset_y", 2)
 	add_child(status_label)
+
+	health_bar_bg = ColorRect.new()
+	health_bar_bg.color = Color(0.025, 0.035, 0.03, 0.78)
+	add_child(health_bar_bg)
+	health_bar_fill = ColorRect.new()
+	health_bar_fill.color = Color(0.28, 0.78, 0.38, 0.95)
+	health_bar_bg.add_child(health_bar_fill)
 
 	hint_label = Label.new()
 	hint_label.text = "MOVE"
@@ -85,6 +94,10 @@ func _layout_hud() -> void:
 
 	status_label.position = Vector2(margin, margin * 0.8)
 	status_label.add_theme_font_size_override("font_size", roundi(22.0 * ui_scale))
+	health_bar_bg.position = Vector2(margin, margin * 2.55)
+	health_bar_bg.size = Vector2(220.0 * ui_scale, 10.0 * ui_scale)
+	health_bar_fill.position = Vector2.ZERO
+	health_bar_fill.size = health_bar_bg.size
 	hint_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	hint_label.position = Vector2(margin + 8.0 * ui_scale, -margin - 94.0 * ui_scale)
 	hint_label.add_theme_font_size_override("font_size", roundi(14.0 * ui_scale))
@@ -121,6 +134,10 @@ func set_status(health: int, zombie_count: int, ammo: int, reserve: int, reloadi
 	if is_instance_valid(status_label):
 		var reload_text := "     RELOADING..." if reloading else ""
 		status_label.text = "HP  %03d     AMMO  %02d/%02d     INFECTED  %02d%s" % [health, ammo, reserve, zombie_count, reload_text]
+	if is_instance_valid(health_bar_fill):
+		var ratio := clampf(float(health) / 100.0, 0.0, 1.0)
+		health_bar_fill.size.x = health_bar_bg.size.x * ratio
+		health_bar_fill.color = Color(0.28, 0.78, 0.38, 0.95) if ratio > 0.5 else (Color(0.95, 0.68, 0.18, 0.95) if ratio > 0.25 else Color(0.92, 0.24, 0.20, 0.98))
 
 func _is_over_action_button(point: Vector2) -> bool:
 	for button in [fire_button, reload_button, jump_button, sprint_button]:
@@ -163,3 +180,10 @@ func _draw() -> void:
 	var knob := center + joystick * joystick_radius * 0.62
 	draw_circle(knob, 29.0 * ui_scale, Color(0.72, 0.82, 0.68, 0.38))
 	draw_arc(knob, 29.0 * ui_scale, 0, TAU, 32, Color(0.92, 0.96, 0.88, 0.72), 2.0 * ui_scale)
+	var aim_center := size * 0.5
+	var reticle_color := Color(0.94, 0.96, 0.88, 0.78)
+	draw_line(aim_center + Vector2(-13, 0) * ui_scale, aim_center + Vector2(-5, 0) * ui_scale, reticle_color, 2.0 * ui_scale)
+	draw_line(aim_center + Vector2(5, 0) * ui_scale, aim_center + Vector2(13, 0) * ui_scale, reticle_color, 2.0 * ui_scale)
+	draw_line(aim_center + Vector2(0, -13) * ui_scale, aim_center + Vector2(0, -5) * ui_scale, reticle_color, 2.0 * ui_scale)
+	draw_line(aim_center + Vector2(0, 5) * ui_scale, aim_center + Vector2(0, 13) * ui_scale, reticle_color, 2.0 * ui_scale)
+	draw_circle(aim_center, 1.8 * ui_scale, reticle_color)
