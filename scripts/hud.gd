@@ -14,6 +14,7 @@ var status_label: Label
 var health_bar_bg: ColorRect
 var health_bar_fill: ColorRect
 var hint_label: Label
+var objective_label: Label
 var fire_button: Button
 var reload_button: Button
 var jump_button: Button
@@ -50,6 +51,14 @@ func _build_hud() -> void:
 	health_bar_fill = ColorRect.new()
 	health_bar_fill.color = Color(0.28, 0.78, 0.38, 0.95)
 	health_bar_bg.add_child(health_bar_fill)
+
+	objective_label = Label.new()
+	objective_label.text = "MISSION 01  |  REACH THE SUPPLY CRATE  •  FOLLOW THE ORANGE FLAG"
+	objective_label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.34, 0.96))
+	objective_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.95))
+	objective_label.add_theme_constant_override("shadow_offset_x", 2)
+	objective_label.add_theme_constant_override("shadow_offset_y", 2)
+	add_child(objective_label)
 
 	hint_label = Label.new()
 	hint_label.text = "MOVE"
@@ -98,6 +107,9 @@ func _layout_hud() -> void:
 	health_bar_bg.size = Vector2(220.0 * ui_scale, 10.0 * ui_scale)
 	health_bar_fill.position = Vector2.ZERO
 	health_bar_fill.size = health_bar_bg.size
+	objective_label.position = Vector2(margin, margin * 3.45)
+	objective_label.add_theme_font_size_override("font_size", roundi(16.0 * ui_scale))
+	objective_label.size = Vector2(size.x * 0.72, 34.0 * ui_scale)
 	hint_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	hint_label.position = Vector2(margin + 8.0 * ui_scale, -margin - 94.0 * ui_scale)
 	hint_label.add_theme_font_size_override("font_size", roundi(14.0 * ui_scale))
