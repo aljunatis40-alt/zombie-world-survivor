@@ -9,6 +9,7 @@ on:
       - "**.gd"
       - "**.tscn"
       - "**.tres"
+      - "*.svg"
       - "project.godot"
       - "export_presets.cfg"
       - ".github/workflows/android-apk.yml"
@@ -79,6 +80,8 @@ jobs:
           echo "=== Android texture compression setting ==="
           grep -n "import_etc2_astc" project.godot
           test "$(grep -c 'textures/vram_compression/import_etc2_astc=true' project.godot)" -eq 1
+          grep -n 'version/code=2' export_presets.cfg
+          grep -n 'package/icon="res://icon.svg"' export_presets.cfg
 
       - name: Create temporary debug signing key
         run: |
@@ -97,17 +100,17 @@ jobs:
           mkdir -p build/android
           mkdir -p "$GITHUB_WORKSPACE/.android"
           cp "$HOME/.android/debug.keystore" "$GITHUB_WORKSPACE/.android/debug.keystore"
-          godot --headless --verbose --path . --export-debug "Android" build/android/ZombieWorldSurvivor-debug.apk
+          godot --headless --verbose --path . --export-debug "Android" build/android/ZombieWorldSurvivor-v0.1.1-Sample02.apk
 
       - name: Verify APK
         run: |
-          test -s build/android/ZombieWorldSurvivor-debug.apk
-          ls -lh build/android/ZombieWorldSurvivor-debug.apk
+          test -s build/android/ZombieWorldSurvivor-v0.1.1-Sample02.apk
+          ls -lh build/android/ZombieWorldSurvivor-v0.1.1-Sample02.apk
 
       - name: Upload sample APK
         uses: actions/upload-artifact@v4
         with:
-          name: ZombieWorldSurvivor-debug-apk
-          path: build/android/ZombieWorldSurvivor-debug.apk
+          name: ZombieWorldSurvivor-Sample-02
+          path: build/android/ZombieWorldSurvivor-v0.1.1-Sample02.apk
           if-no-files-found: error
           retention-days: 14
