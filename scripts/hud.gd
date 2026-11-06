@@ -158,7 +158,9 @@ func _button_style(color: Color) -> StyleBoxFlat:
 	return style
 
 func _find_player() -> void:
-	player_ref = get_parent().get_node_or_null("Survivor")
+	var scene_root := get_parent().get_parent()
+	if is_instance_valid(scene_root):
+		player_ref = scene_root.get_node_or_null("Survivor")
 
 func set_status(health: int, zombie_count: int, ammo: int, reserve: int, reloading: bool = false) -> void:
 	if is_instance_valid(status_label):
