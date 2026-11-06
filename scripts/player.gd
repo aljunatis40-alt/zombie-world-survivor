@@ -9,7 +9,8 @@ var camera_pivot: Node3D
 var camera: Camera3D
 var visual: MeshInstance3D
 var move_touch := Vector2.ZERO
-var look_touch := Vector2.ZERO
+var mobile_sprint := false
+var jump_queued := false
 
 func _ready() -> void:
 	add_to_group("player")
@@ -46,6 +47,12 @@ func _unhandled_input(event: InputEvent) -> void:
 func set_mobile_move(value: Vector2) -> void:
 	move_touch = value.limit_length(1.0)
 
+func set_mobile_sprint(active: bool) -> void:
+	mobile_sprint = active
+
+func request_jump() -> void:
+	jump_queued = true
+
 func add_mobile_look(value: Vector2) -> void:
 	camera_pivot.rotate_y(-value.x * 0.006)
 	camera.rotation.x = clamp(camera.rotation.x - value.y * 0.006, -0.75, 0.25)
@@ -62,13 +69,16 @@ func _physics_process(delta: float) -> void:
 	var direction := (right * input_dir.x + forward * input_dir.y)
 	direction.y = 0
 	direction = direction.normalized()
-	var speed := sprint_speed if Input.is_action_pressed("sprint") else walk_speed
+	var speed := sprint_speed if mobile_sprint or Input.is_action_pressed("sprint") else walk_speed
 	velocity.x = move_toward(velocity.x, direction.x * speed, acceleration * delta)
 	velocity.z = move_toward(velocity.z, direction.z * speed, acceleration * delta)
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	else:
 		velocity.y = -0.5
+		if jump_queued:
+			velocity.y = 7.0
+	jump_queued = false
 	if direction.length() > 0.1:
 		visual.rotation.y = lerp_angle(visual.rotation.y, atan2(direction.x, direction.z), delta * 10.0)
 	move_and_slide()
