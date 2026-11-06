@@ -191,7 +191,7 @@ func _build_environment() -> void:
 
 func _decorate_building(building: MeshInstance3D, height: float, variant: int) -> void:
 	var glass_colors := [Color(0.10, 0.19, 0.22), Color(0.16, 0.24, 0.25), Color(0.22, 0.20, 0.16)]
-	var glass := glass_colors[variant % glass_colors.size()]
+	var glass: Color = glass_colors[variant % glass_colors.size()]
 	var frame := Color(0.12, 0.13, 0.12)
 	var facade := Color(0.32, 0.31, 0.27)
 	for floor_index in range(int(height / 3.0)):
