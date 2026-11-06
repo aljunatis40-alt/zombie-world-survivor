@@ -39,8 +39,8 @@ func _build_hud() -> void:
 
 	hint_label = Label.new()
 	hint_label.text = "MOVE"
-	hint_label.position = Vector2(34, -108)
 	hint_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	hint_label.position = Vector2(34, -108)
 	hint_label.add_theme_font_size_override("font_size", 14)
 	hint_label.add_theme_color_override("font_color", Color(0.88, 0.92, 0.86, 0.8))
 	add_child(hint_label)
@@ -51,7 +51,7 @@ func _build_hud() -> void:
 	reload_button.pressed.connect(func(): reload_requested.emit())
 	jump_button = _make_button("JUMP", Vector2(-132, -210), BUTTON_SIZE)
 	jump_button.pressed.connect(func(): jump_requested.emit())
-	sprint_button = _make_button("RUN", Vector2(28, -118), BUTTON_SIZE)
+	sprint_button = _make_button("RUN", Vector2(-244, -210), BUTTON_SIZE)
 	sprint_button.button_down.connect(func():
 		sprint_active = true
 		sprint_changed.emit(true)
@@ -91,9 +91,15 @@ func _button_style(color: Color) -> StyleBoxFlat:
 func _find_player() -> void:
 	player_ref = get_parent().get_node_or_null("Survivor")
 
-func set_status(health: int, zombie_count: int) -> void:
+func set_status(health: int, zombie_count: int, ammo: int, reserve: int) -> void:
 	if is_instance_valid(status_label):
-		status_label.text = "HP  %03d     INFECTED  %02d" % [health, zombie_count]
+		status_label.text = "HP  %03d     AMMO  %02d/%02d     INFECTED  %02d" % [health, ammo, reserve, zombie_count]
+
+func _is_over_action_button(point: Vector2) -> bool:
+	for button in [fire_button, reload_button, jump_button, sprint_button]:
+		if is_instance_valid(button) and button.get_global_rect().has_point(point):
+			return true
+	return false
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
@@ -103,7 +109,7 @@ func _input(event: InputEvent) -> void:
 				move_origin = event.position
 				joystick = Vector2.ZERO
 				queue_redraw()
-			elif event.position.x >= size.x * LOOK_ZONE_RATIO and event.position.y > size.y * 0.18 and look_pointer == -1:
+			elif event.position.x >= size.x * LOOK_ZONE_RATIO and event.position.y > size.y * 0.18 and look_pointer == -1 and not _is_over_action_button(event.position):
 				look_pointer = event.index
 		else:
 			if event.index == move_pointer:
