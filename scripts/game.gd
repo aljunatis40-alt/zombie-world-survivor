@@ -8,6 +8,9 @@ var player: CharacterBody3D
 var hud: Control
 var world_root: Node3D
 var zombies: Array[Node3D] = []
+var magazine_ammo := 12
+var reserve_ammo := 60
+var is_reloading := false
 
 func _ready() -> void:
 	_build_environment()
@@ -22,6 +25,9 @@ func _ready() -> void:
 	add_child(hud)
 	hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hud.fire_requested.connect(_on_fire_requested)
+	hud.reload_requested.connect(_on_reload_requested)
+	hud.jump_requested.connect(_on_jump_requested)
+	hud.sprint_changed.connect(_on_sprint_changed)
 	for i in range(9):
 		var zombie := CharacterBody3D.new()
 		zombie.set_script(ZombieScript)
@@ -34,13 +40,35 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if is_instance_valid(hud) and is_instance_valid(player):
-		hud.set_status(int(player.get("health")), zombies.size())
+		hud.set_status(int(player.get("health")), zombies.size(), magazine_ammo, reserve_ammo)
+
+func _on_jump_requested() -> void:
+	if is_instance_valid(player):
+		player.call("request_jump")
+
+func _on_sprint_changed(active: bool) -> void:
+	if is_instance_valid(player):
+		player.call("set_mobile_sprint", active)
+
+func _on_reload_requested() -> void:
+	if is_reloading or magazine_ammo >= 12 or reserve_ammo <= 0:
+		return
+	is_reloading = true
+	var needed := 12 - magazine_ammo
+	var loaded := mini(needed, reserve_ammo)
+	magazine_ammo += loaded
+	reserve_ammo -= loaded
+	is_reloading = false
 
 func _on_fire_requested() -> void:
-	if not is_instance_valid(player):
+	if not is_instance_valid(player) or magazine_ammo <= 0:
 		return
-	var origin: Vector3 = player.global_position + Vector3.UP * 1.35
-	var direction: Vector3 = -player.global_transform.basis.z
+	magazine_ammo -= 1
+	var camera: Camera3D = player.get("camera")
+	if not is_instance_valid(camera):
+		return
+	var origin := camera.global_position
+	var direction := -camera.global_transform.basis.z
 	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * 42.0)
 	query.exclude = [player.get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
