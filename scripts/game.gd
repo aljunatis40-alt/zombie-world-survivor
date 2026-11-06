@@ -36,7 +36,11 @@ func _ready() -> void:
 		var angle := TAU * float(i) / 9.0
 		zombie.position = Vector3(cos(angle) * 15.0, 1.0, sin(angle) * 15.0)
 		zombie.set("target", player)
+		zombie.died.connect(_on_zombie_died)
 		zombies.append(zombie)
+
+func _on_zombie_died(zombie: Node3D) -> void:
+	zombies.erase(zombie)
 
 func _process(_delta: float) -> void:
 	if is_instance_valid(hud) and is_instance_valid(player):
