@@ -14,6 +14,8 @@ var reserve_ammo := 60
 var is_reloading := false
 var sound_players: Dictionary = {}
 var bench_positions: Array[Vector3] = []
+var medkits := 2
+var crate_opened := false
 
 func _ready() -> void:
 	_build_audio()
@@ -40,6 +42,9 @@ func _ready() -> void:
 	hud.sit_requested.connect(_on_sit_requested)
 	hud.crouch_changed.connect(_on_crouch_changed)
 	hud.aim_changed.connect(_on_aim_changed)
+	hud.heal_requested.connect(_on_heal_requested)
+	hud.inventory_toggled.connect(_on_inventory_toggled)
+	hud.interact_requested.connect(_on_interact_requested)
 	player.connect("footstep", func(): _play_sound("footstep"))
 	player.connect("jumped", func(): _play_sound("jump"))
 	player.connect("landed", func(): _play_sound("land"))
@@ -66,7 +71,8 @@ func _process(_delta: float) -> void:
 		hud.set_status(int(player.get("health")), zombies.size(), magazine_ammo, reserve_ammo, is_reloading)
 		var camera: Camera3D = player.get("camera")
 		if is_instance_valid(camera):
-			var objective_position := Vector3(0, 0, -25.2)
+			hud.set_inventory_text("SURVIVOR INVENTORY\\n\\n9mm: %d / %d\\nMedkits: %d\\n\\nTap INTERACT near supply crate." % [magazine_ammo, reserve_ammo, medkits])
+		var objective_position := Vector3(0, 0, -25.2)
 			var to_objective := objective_position - player.global_position
 			var distance := to_objective.length()
 			var local_direction := camera.global_transform.basis.inverse() * to_objective.normalized()
@@ -87,6 +93,42 @@ func _on_crouch_changed(active: bool) -> void:
 func _on_aim_changed(active: bool) -> void:
 	if is_instance_valid(player):
 		player.call("set_mobile_aim", active)
+
+func _on_heal_requested() -> void:
+	if not is_instance_valid(player):
+		return
+	var current_health := int(player.get("health"))
+	if current_health >= 100:
+		hud.heal_button.text = "FULL HP"
+		return
+	if medkits <= 0:
+		hud.heal_button.text = "NO KIT"
+		return
+	medkits -= 1
+	player.set("health", mini(100, current_health + 35))
+	_play_sound("reload")
+	hud.heal_button.text = "HEALED"
+
+func _on_inventory_toggled() -> void:
+	if is_instance_valid(hud):
+		hud.toggle_inventory()
+
+func _on_interact_requested() -> void:
+	if not is_instance_valid(player):
+		return
+	if crate_opened:
+		hud.interact_button.text = "EMPTY"
+		return
+	var crate_position := Vector3(0, 0, -25.2)
+	var distance := Vector2(player.global_position.x - crate_position.x, player.global_position.z - crate_position.z).length()
+	if distance > 3.8:
+		hud.interact_button.text = "TOO FAR"
+		return
+	crate_opened = true
+	reserve_ammo += 24
+	medkits += 1
+	hud.interact_button.text = "LOOTED"
+	_play_sound("reload")
 
 func _on_reload_requested() -> void:
 	if is_reloading or magazine_ammo >= 12 or reserve_ammo <= 0:
