@@ -18,6 +18,9 @@ var right_leg: Node3D
 var animation_clock := 0.0
 var hit_flash := 0.0
 var personal_speed := 1.0
+var is_dead := false
+var death_clock := 0.0
+var death_direction := 1.0
 
 func _ready() -> void:
 	add_to_group("zombies")
@@ -45,12 +48,18 @@ func _build_zombie_visual() -> void:
 	_add_box(visual, "TornShirtPatch", Vector3(0.18, 0.24, 0.06), Vector3(-0.20, 0.24, -0.22), torn_clothes)
 	_add_box(visual, "UtilityBelt", Vector3(0.54, 0.12, 0.34), Vector3(0, -0.30, 0), dark)
 	_add_sphere(visual, "Head", 0.235, Vector3(0, 0.78, 0), skin)
+	_add_sphere(visual, "MattedHair", 0.235, Vector3(0, 0.93, 0.025), _material(Color(0.10, 0.095, 0.075)))
+	_add_box(visual, "BrokenFringe", Vector3(0.29, 0.09, 0.12), Vector3(0, 0.89, -0.17), _material(Color(0.075, 0.07, 0.055)))
+	_add_box(visual, "LeftCheekWound", Vector3(0.075, 0.025, 0.018), Vector3(-0.15, 0.70, -0.195), _material(Color(0.22, 0.075, 0.055)))
+	_add_box(visual, "RightCheekScar", Vector3(0.065, 0.018, 0.018), Vector3(0.15, 0.75, -0.195), _material(Color(0.25, 0.12, 0.075)))
 	_add_sphere(visual, "LeftEar", 0.06, Vector3(-0.22, 0.79, 0), skin)
 	_add_sphere(visual, "RightEar", 0.06, Vector3(0.22, 0.79, 0), skin)
 	_add_sphere(visual, "Nose", 0.045, Vector3(0, 0.76, -0.22), skin)
 	_add_sphere(visual, "LeftEyeSocket", 0.043, Vector3(-0.085, 0.82, -0.19), dark)
 	_add_sphere(visual, "RightEyeSocket", 0.043, Vector3(0.085, 0.82, -0.19), dark)
 	_add_sphere(visual, "Jaw", 0.15, Vector3(0, 0.66, -0.10), dark)
+	_add_box(visual, "LowerTeeth", Vector3(0.105, 0.025, 0.025), Vector3(0, 0.655, -0.225), _material(Color(0.72, 0.68, 0.52)))
+	_add_box(visual, "TornCollar", Vector3(0.42, 0.10, 0.22), Vector3(0, 0.52, -0.015), torn_clothes)
 	_add_sphere(visual, "LeftEye", 0.035, Vector3(-0.085, 0.81, -0.205), eye_material)
 	_add_sphere(visual, "RightEye", 0.035, Vector3(0.085, 0.81, -0.205), eye_material)
 	_add_capsule(visual, "Rag", 0.13, 0.44, Vector3(0, 0.27, 0.19), torn_clothes)
@@ -123,6 +132,24 @@ func _add_box(parent: Node3D, label: String, dimensions: Vector3, pos: Vector3, 
 	return instance
 
 func _physics_process(delta: float) -> void:
+	if is_dead:
+		death_clock += delta
+		velocity.x = move_toward(velocity.x, 0.0, 3.5 * delta)
+		velocity.z = move_toward(velocity.z, 0.0, 3.5 * delta)
+		if not is_on_floor():
+			velocity.y -= 22.0 * delta
+		else:
+			velocity.y = -0.4
+		move_and_slide()
+		visual.rotation.z = lerp_angle(visual.rotation.z, death_direction * 1.32, delta * 2.6)
+		visual.position.y = lerpf(visual.position.y, -0.48, delta * 2.0)
+		left_arm.rotation.z = lerpf(left_arm.rotation.z, -death_direction * 0.85, delta * 2.4)
+		right_arm.rotation.z = lerpf(right_arm.rotation.z, -death_direction * 0.85, delta * 2.4)
+		left_leg.rotation.x = lerpf(left_leg.rotation.x, 0.45, delta * 2.0)
+		right_leg.rotation.x = lerpf(right_leg.rotation.x, -0.35, delta * 2.0)
+		if death_clock >= 2.6:
+			queue_free()
+		return
 	if not is_instance_valid(target):
 		return
 	attack_cooldown = maxf(0.0, attack_cooldown - delta)
@@ -168,5 +195,8 @@ func take_damage(amount: int) -> void:
 	hit_received.emit()
 	hit_flash = 0.16
 	if health <= 0:
+		is_dead = true
+		death_direction = -1.0 if global_position.x < target.global_position.x else 1.0
+		collision_layer = 0
+		collision_mask = 0
 		died.emit(self)
-		queue_free()
