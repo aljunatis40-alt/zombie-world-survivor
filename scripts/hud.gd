@@ -44,7 +44,9 @@ var player_ref: Node
 var sprint_active := false
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	z_index = 100
+	visible = true
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_build_hud()
 	call_deferred("_find_player")
@@ -205,12 +207,14 @@ func toggle_inventory() -> void:
 		inventory_button.text = "CLOSE" if inventory_panel.visible else "BAG"
 
 func _place_button(button: Button, button_size: Vector2, offset: Vector2) -> void:
-	button.anchor_left = 1.0
-	button.anchor_top = 1.0
-	button.anchor_right = 1.0
-	button.anchor_bottom = 1.0
+	# Use explicit top-left coordinates. Bottom-right anchor offsets can be
+	# misinterpreted by some Android stretch/safe-area combinations.
+	button.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	button.size = button_size
-	button.position = offset
+	button.position = Vector2(size.x + offset.x, size.y + offset.y)
+	button.z_index = 101
+	button.visible = true
+	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", roundi(17.0 * ui_scale))
 
 func _button_style(color: Color) -> StyleBoxFlat:
