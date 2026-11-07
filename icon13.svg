@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#173c2b"/><stop offset="1" stop-color="#071b16"/></linearGradient><linearGradient id="lime" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#a5f36b"/><stop offset="1" stop-color="#3b9a52"/></linearGradient></defs>
+<rect width="512" height="512" rx="112" fill="url(#bg)"/><path d="M256 38 442 145v222L256 474 70 367V145Z" fill="none" stroke="#6acb72" stroke-width="13" opacity=".7"/>
+<path d="M256 92c-71 0-128 57-128 128v57c0 22 18 40 40 40h16v55h144v-55h16c22 0 40-18 40-40v-57c0-71-57-128-128-128Z" fill="url(#lime)" stroke="#d7ffb1" stroke-width="9"/>
+<path d="M185 223c0-18 14-32 32-32s32 14 32 32v17h-64Zm78 0c0-18 14-32 32-32s32 14 32 32v17h-64Z" fill="#10261b"/>
+<path d="m210 285 27-14 19 13 19-13 27 14-18 28h-56Z" fill="#10261b"/>
+<path d="M224 343h64v54h-64z" fill="#d7ffb1"/><path d="m236 356 40 0m-40 15h40" stroke="#245c37" stroke-width="8" stroke-linecap="round"/>
+<path d="m106 176 36-20m264 20-36-20M106 337l36 20m264-20-36 20" stroke="#a5f36b" stroke-width="12" stroke-linecap="round"/>
+<text x="256" y="449" fill="#e5ffcf" font-family="Arial,sans-serif" font-size="31" font-weight="900" text-anchor="middle" letter-spacing="4">SURVIVOR</text>
+</svg>
