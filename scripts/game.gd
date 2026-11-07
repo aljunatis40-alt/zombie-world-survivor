@@ -39,6 +39,7 @@ func _ready() -> void:
 	hud.sprint_changed.connect(_on_sprint_changed)
 	hud.sit_requested.connect(_on_sit_requested)
 	hud.crouch_changed.connect(_on_crouch_changed)
+	hud.aim_changed.connect(_on_aim_changed)
 	player.connect("footstep", func(): _play_sound("footstep"))
 	player.connect("jumped", func(): _play_sound("jump"))
 	player.connect("landed", func(): _play_sound("land"))
@@ -82,6 +83,10 @@ func _on_sprint_changed(active: bool) -> void:
 func _on_crouch_changed(active: bool) -> void:
 	if is_instance_valid(player):
 		player.call("set_crouched", active)
+
+func _on_aim_changed(active: bool) -> void:
+	if is_instance_valid(player):
+		player.call("set_mobile_aim", active)
 
 func _on_reload_requested() -> void:
 	if is_reloading or magazine_ammo >= 12 or reserve_ammo <= 0:

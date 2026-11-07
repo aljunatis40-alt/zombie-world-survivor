@@ -28,6 +28,8 @@ var movement_state := "IDLE"
 var collision_shape: CollisionShape3D
 var standing_capsule_height := 1.8
 var crouched_capsule_height := 1.22
+var mobile_aim := false
+var default_camera_fov := 75.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -51,6 +53,7 @@ func _ready() -> void:
 	camera_pivot.add_child(camera_spring)
 	camera = Camera3D.new()
 	camera.position = Vector3.ZERO
+	camera.fov = default_camera_fov
 	camera.current = true
 	camera_spring.add_child(camera)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if not OS.has_feature("mobile") else Input.MOUSE_MODE_VISIBLE
@@ -160,6 +163,13 @@ func set_mobile_move(value: Vector2) -> void:
 
 func set_mobile_sprint(active: bool) -> void:
 	mobile_sprint = active
+
+func set_mobile_aim(active: bool) -> void:
+	mobile_aim = active
+	if is_instance_valid(camera_spring):
+		camera_spring.spring_length = 3.25 if mobile_aim else 5.8
+	if is_instance_valid(camera):
+		camera.fov = 60.0 if mobile_aim else default_camera_fov
 
 func request_jump() -> void:
 	if not seated and not crouched:
