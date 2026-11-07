@@ -7,6 +7,9 @@ signal sprint_changed(active: bool)
 signal sit_requested
 signal crouch_changed(active: bool)
 signal aim_changed(active: bool)
+signal heal_requested
+signal inventory_toggled
+signal interact_requested
 
 const BASE_BUTTON_SIZE := Vector2(92, 64)
 const BASE_FIRE_SIZE := Vector2(108, 78)
@@ -26,6 +29,11 @@ var sprint_button: Button
 var sit_button: Button
 var crouch_button: Button
 var aim_button: Button
+var heal_button: Button
+var inventory_button: Button
+var interact_button: Button
+var inventory_panel: PanelContainer
+var inventory_text: Label
 var aim_active := false
 var crouch_active := false
 var move_origin := Vector2.ZERO
@@ -114,6 +122,27 @@ func _build_hud() -> void:
 		aim_button.text = "AIM ON" if active else "AIM"
 		aim_changed.emit(active)
 	)
+	heal_button = _make_button("HEAL")
+	heal_button.pressed.connect(func(): heal_requested.emit())
+	inventory_button = _make_button("BAG")
+	inventory_button.pressed.connect(func(): inventory_toggled.emit())
+	interact_button = _make_button("INTERACT")
+	interact_button.pressed.connect(func(): interact_requested.emit())
+	inventory_panel = PanelContainer.new()
+	inventory_panel.visible = false
+	inventory_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.025, 0.045, 0.04, 0.94)
+	panel_style.border_color = Color(0.72, 0.78, 0.68, 0.9)
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(12)
+	inventory_panel.add_theme_stylebox_override("panel", panel_style)
+	add_child(inventory_panel)
+	inventory_text = Label.new()
+	inventory_text.text = "SURVIVOR INVENTORY\\n9mm Ammo\\nMedkits"
+	inventory_text.add_theme_color_override("font_color", Color(0.94, 0.96, 0.88))
+	inventory_text.add_theme_font_size_override("font_size", 20)
+	inventory_panel.add_child(inventory_text)
 
 func _make_button(label: String) -> Button:
 	var button := Button.new()
@@ -158,7 +187,22 @@ func _layout_hud() -> void:
 	_place_button(sit_button, action_size, Vector2(-margin - fire_size.x, -margin - fire_size.y - 2.0 * (gap + action_size.y)))
 	_place_button(crouch_button, action_size, Vector2(-margin - fire_size.x - gap - action_size.x, -margin - fire_size.y - 2.0 * (gap + action_size.y)))
 	_place_button(aim_button, action_size, Vector2(-margin - fire_size.x - gap - action_size.x, -margin - fire_size.y - 3.0 * (gap + action_size.y)))
+	_place_button(interact_button, action_size, Vector2(-margin - fire_size.x, -margin - fire_size.y - 3.0 * (gap + action_size.y)))
+	_place_button(heal_button, action_size, Vector2(-margin - fire_size.x - gap - action_size.x, -margin - fire_size.y - 4.0 * (gap + action_size.y)))
+	_place_button(inventory_button, action_size, Vector2(-margin - fire_size.x, -margin - fire_size.y - 4.0 * (gap + action_size.y)))
+	inventory_panel.position = Vector2(size.x * 0.5 - 150.0 * ui_scale, size.y * 0.5 - 100.0 * ui_scale)
+	inventory_panel.size = Vector2(300.0 * ui_scale, 200.0 * ui_scale)
+	inventory_text.add_theme_font_size_override("font_size", roundi(20.0 * ui_scale))
 	queue_redraw()
+
+func set_inventory_text(value: String) -> void:
+	if is_instance_valid(inventory_text):
+		inventory_text.text = value
+
+func toggle_inventory() -> void:
+	if is_instance_valid(inventory_panel):
+		inventory_panel.visible = not inventory_panel.visible
+		inventory_button.text = "CLOSE" if inventory_panel.visible else "BAG"
 
 func _place_button(button: Button, button_size: Vector2, offset: Vector2) -> void:
 	button.anchor_left = 1.0
@@ -194,7 +238,7 @@ func set_status(health: int, zombie_count: int, ammo: int, reserve: int, reloadi
 		health_bar_fill.color = Color(0.28, 0.78, 0.38, 0.95) if ratio > 0.5 else (Color(0.95, 0.68, 0.18, 0.95) if ratio > 0.25 else Color(0.92, 0.24, 0.20, 0.98))
 
 func _is_over_action_button(point: Vector2) -> bool:
-	for button in [fire_button, reload_button, jump_button, sprint_button, sit_button, crouch_button, aim_button]:
+	for button in [fire_button, reload_button, jump_button, sprint_button, sit_button, crouch_button, aim_button, heal_button, inventory_button, interact_button]:
 		if is_instance_valid(button) and button.get_global_rect().has_point(point):
 			return true
 	return false
