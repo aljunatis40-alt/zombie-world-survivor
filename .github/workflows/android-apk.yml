@@ -123,13 +123,13 @@ jobs:
 
       - name: Verify APK
         run: |
-          test -s build/android/ZombieWorldSurvivor-v0.1.9-Sample10.apk
-          ls -lh build/android/ZombieWorldSurvivor-v0.1.9-Sample10.apk
+          test -s build/android/ZombieWorldSurvivor-v0.2.0-Sample11.apk
+          ls -lh build/android/ZombieWorldSurvivor-v0.2.0-Sample11.apk
 
       - name: Upload sample APK
         uses: actions/upload-artifact@v4
         with:
           name: ZombieWorldSurvivor-Sample-11
-          path: build/android/ZombieWorldSurvivor-v0.1.9-Sample10.apk
+          path: build/android/ZombieWorldSurvivor-v0.2.0-Sample11.apk
           if-no-files-found: error
           retention-days: 14
