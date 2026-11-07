@@ -271,6 +271,79 @@ func _build_environment() -> void:
 	_build_parked_vehicles()
 	_build_park_and_shops()
 	_build_philippine_public_transport()
+	_build_barangay_street_scene()
+
+
+func _build_barangay_street_scene() -> void:
+	# Compact Filipino barangay details near the starting block.
+	_build_sari_sari_store(Vector3(17.5, 0, -12.0))
+	_build_barangay_house(Vector3(-18.0, 0, -15.0), Color(0.72, 0.66, 0.52), "PUROK 3")
+	_build_barangay_house(Vector3(18.5, 0, 38.0), Color(0.58, 0.66, 0.58), "BAHAY")
+	# Concrete utility poles and overhead service wires along the neighborhood road.
+	for side in [-1.0, 1.0]:
+		for pole_z in [-42.0, -2.0, 38.0]:
+			var pole_pos := Vector3(side * 10.2, 0, pole_z)
+			_detail_box(world_root, "BarangayPowerPole", Vector3(0.28, 8.4, 0.28), pole_pos + Vector3(0, 4.2, 0), Color(0.43, 0.42, 0.37))
+			_detail_box(world_root, "PoleCrossArm", Vector3(2.0, 0.16, 0.18), pole_pos + Vector3(0, 7.65, 0), Color(0.28, 0.29, 0.27))
+			for wire_x in [-0.62, 0.0, 0.62]:
+				_detail_box(world_root, "PowerInsulator", Vector3(0.13, 0.32, 0.13), pole_pos + Vector3(wire_x, 7.88, 0), Color(0.18, 0.20, 0.19))
+		# Sag-free stylized wires; short spans keep geometry simple on mobile.
+		for span_z in [-22.0, 18.0]:
+			_detail_box(world_root, "OverheadPowerWire", Vector3(0.045, 0.045, 40.0), Vector3(side * 10.2, 7.72, span_z), Color(0.055, 0.06, 0.055))
+	# Tropical roadside plants and small concrete drainage covers.
+	for plant_index in range(10):
+		var plant_z := -48.0 + float(plant_index) * 10.0
+		for side in [-1.0, 1.0]:
+			var plant_pos := Vector3(side * 8.9, 0.55, plant_z)
+			_detail_box(world_root, "BarangayShrub", Vector3(0.85, 1.0, 0.85), plant_pos, Color(0.16, 0.29 + float(plant_index % 3) * 0.025, 0.14))
+			_detail_box(world_root, "DrainageSlab", Vector3(0.75, 0.10, 2.2), Vector3(side * 8.0, 0.12, plant_z), Color(0.36, 0.37, 0.33))
+	# Painted pedestrian crossing and barangay direction board.
+	for stripe in range(7):
+		_detail_box(world_root, "BarangayCrossingStripe", Vector3(0.72, 0.035, 2.6), Vector3(-2.7 + float(stripe) * 0.9, 0.045, 14.0), Color(0.82, 0.81, 0.72))
+	var direction_board := _detail_box(world_root, "PurokDirectionBoard", Vector3(3.8, 1.1, 0.16), Vector3(-9.8, 2.8, -4.0), Color(0.10, 0.29, 0.18))
+	var board_label := Label3D.new()
+	board_label.text = "BARANGAY  •  PUROK 3"
+	board_label.font_size = 34
+	board_label.pixel_size = 0.012
+	board_label.modulate = Color(0.96, 0.91, 0.72)
+	board_label.position = Vector3(0, 0, -0.12)
+	direction_board.add_child(board_label)
+
+
+func _build_sari_sari_store(center: Vector3) -> void:
+	var shop := Node3D.new()
+	shop.name = "BarangaySariSariStore"
+	shop.position = center
+	world_root.add_child(shop)
+	_detail_box(shop, "StoreConcreteShell", Vector3(8.5, 4.8, 7.0), Vector3(0, 2.4, 0), Color(0.64, 0.59, 0.47))
+	_detail_box(shop, "StoreRoof", Vector3(9.0, 0.32, 7.5), Vector3(0, 4.85, 0), Color(0.20, 0.25, 0.22))
+	_detail_box(shop, "StoreFrontCounter", Vector3(5.8, 1.15, 0.75), Vector3(0, 0.85, -3.72), Color(0.36, 0.25, 0.15))
+	_detail_box(shop, "StoreServiceOpening", Vector3(5.9, 1.45, 0.12), Vector3(0, 2.45, -3.58), Color(0.12, 0.18, 0.16))
+	_detail_box(shop, "StoreAwning", Vector3(9.0, 0.18, 1.3), Vector3(0, 3.65, -4.0), Color(0.63, 0.22, 0.16))
+	var sign_board := _detail_box(shop, "SariSariSign", Vector3(7.5, 0.82, 0.20), Vector3(0, 4.15, -3.62), Color(0.12, 0.31, 0.20))
+	var sign_label := Label3D.new()
+	sign_label.text = "SARI-SARI STORE"
+	sign_label.font_size = 42
+	sign_label.pixel_size = 0.012
+	sign_label.modulate = Color(1.0, 0.94, 0.76)
+	sign_label.position = Vector3(0, -0.10, -0.12)
+	sign_board.add_child(sign_label)
+	for shelf_x in [-1.9, -0.65, 0.65, 1.9]:
+		_detail_box(shop, "StoreGoodsShelf", Vector3(0.72, 0.72, 0.32), Vector3(shelf_x, 1.9, -3.48), Color(0.76, 0.55, 0.18))
+
+
+func _build_barangay_house(center: Vector3, wall_color: Color, house_label: String) -> void:
+	var house := Node3D.new()
+	house.name = "BarangayHouse_" + house_label.replace(" ", "_")
+	house.position = center
+	world_root.add_child(house)
+	_detail_box(house, "ConcreteHouseBody", Vector3(9.0, 4.4, 8.0), Vector3(0, 2.2, 0), wall_color)
+	_detail_box(house, "HouseRoof", Vector3(9.6, 0.42, 8.6), Vector3(0, 4.55, 0), Color(0.22, 0.24, 0.23))
+	_detail_box(house, "HouseFrontDoor", Vector3(1.25, 2.35, 0.14), Vector3(-2.2, 1.18, -4.08), Color(0.19, 0.15, 0.11))
+	for window_x in [-0.1, 2.5]:
+		_detail_box(house, "HouseWindow", Vector3(1.55, 1.2, 0.12), Vector3(window_x, 2.55, -4.08), Color(0.12, 0.22, 0.25))
+		_detail_box(house, "WindowGrille", Vector3(1.62, 0.09, 0.16), Vector3(window_x, 2.55, -4.17), Color(0.18, 0.19, 0.17))
+	_detail_box(house, "HouseFrontStep", Vector3(2.2, 0.24, 0.9), Vector3(-2.0, 0.12, -4.45), Color(0.42, 0.41, 0.36))
 
 
 func _build_extended_road_network() -> void:
