@@ -30,6 +30,7 @@ var standing_capsule_height := 1.8
 var crouched_capsule_height := 1.22
 var mobile_aim := false
 var default_camera_fov := 75.0
+var idle_breath_clock := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -77,10 +78,26 @@ func _build_survivor_visual() -> void:
 	_add_sphere(visual, "RightIris", 0.018, Vector3(0.078, 0.825, -0.226), _material(Color(0.12, 0.22, 0.19)))
 	_add_box(visual, "Mouth", Vector3(0.075, 0.018, 0.018), Vector3(0, 0.69, -0.216), _material(Color(0.22, 0.08, 0.07)))
 	_add_sphere(visual, "Hair", 0.23, Vector3(0, 0.91, 0.015), _material(Color(0.12, 0.095, 0.075)))
+	_add_box(visual, "HairFringe", Vector3(0.28, 0.075, 0.13), Vector3(0, 0.91, -0.17), _material(Color(0.10, 0.075, 0.055)))
+	_add_box(visual, "LeftEyebrow", Vector3(0.075, 0.018, 0.025), Vector3(-0.078, 0.87, -0.205), _material(Color(0.12, 0.085, 0.06)))
+	_add_box(visual, "RightEyebrow", Vector3(0.075, 0.018, 0.025), Vector3(0.078, 0.87, -0.205), _material(Color(0.12, 0.085, 0.06)))
 	_add_capsule(visual, "Neck", 0.095, 0.22, Vector3(0, 0.61, 0), skin)
 	_add_box(visual, "SurvivorBackpack", Vector3(0.48, 0.62, 0.24), Vector3(0, 0.13, 0.30), _material(Color(0.12, 0.19, 0.16)))
 	_add_box(visual, "BackpackTopFlap", Vector3(0.50, 0.14, 0.26), Vector3(0, 0.48, 0.30), _material(Color(0.20, 0.25, 0.19)))
 	_add_box(visual, "UtilityBelt", Vector3(0.58, 0.12, 0.34), Vector3(0, -0.30, 0), _material(Color(0.10, 0.11, 0.09)))
+	# Layered field vest, shoulder webbing and practical survivor gear.
+	var vest := _material(Color(0.24, 0.30, 0.23))
+	var vest_dark := _material(Color(0.09, 0.13, 0.11))
+	_add_box(visual, "TacticalVestFront", Vector3(0.55, 0.53, 0.13), Vector3(0, 0.16, -0.205), vest)
+	_add_box(visual, "VestLeftShoulder", Vector3(0.17, 0.18, 0.19), Vector3(-0.26, 0.43, -0.015), vest_dark)
+	_add_box(visual, "VestRightShoulder", Vector3(0.17, 0.18, 0.19), Vector3(0.26, 0.43, -0.015), vest_dark)
+	for pocket_i in range(3):
+		_add_box(visual, "VestPouch_%d" % pocket_i, Vector3(0.135, 0.16, 0.055), Vector3(-0.18 + float(pocket_i) * 0.18, 0.12, -0.29), vest_dark)
+	_add_box(visual, "RadioPouch", Vector3(0.14, 0.23, 0.10), Vector3(0.36, 0.18, 0.08), vest_dark)
+	_add_box(visual, "RadioAntenna", Vector3(0.018, 0.22, 0.018), Vector3(0.36, 0.39, 0.08), _material(Color(0.06, 0.07, 0.06)))
+	_add_box(visual, "LeftKneePad", Vector3(0.22, 0.18, 0.12), Vector3(-0.16, -0.55, -0.11), vest_dark)
+	_add_box(visual, "RightKneePad", Vector3(0.22, 0.18, 0.12), Vector3(0.16, -0.55, -0.11), vest_dark)
+	_add_box(visual, "ChestIDPatch", Vector3(0.16, 0.075, 0.025), Vector3(-0.12, 0.31, -0.285), _material(Color(0.68, 0.65, 0.45)))
 	left_arm_pivot = _make_limb_pivot("LeftArm", Vector3(-0.34, 0.40, 0))
 	right_arm_pivot = _make_limb_pivot("RightArm", Vector3(0.34, 0.40, 0))
 	visual.add_child(left_arm_pivot)
@@ -259,6 +276,10 @@ func _physics_process(delta: float) -> void:
 	if is_moving:
 		visual.rotation.y = lerp_angle(visual.rotation.y, atan2(-direction.x, -direction.z), delta * 10.0)
 	animation_clock += delta * (10.0 if is_sprinting else (4.0 if crouched else 7.0))
+	idle_breath_clock += delta
+	if is_instance_valid(visual):
+		var breath := sin(idle_breath_clock * 2.1) * (0.012 if not is_moving else 0.004)
+		visual.position.y = breath + (-0.12 if crouched else 0.0)
 	var swing := sin(animation_clock) * (0.34 if crouched and is_moving else (0.72 if is_moving else 0.04))
 	if is_instance_valid(left_arm_pivot):
 		left_arm_pivot.rotation.x = lerpf(left_arm_pivot.rotation.x, swing, delta * 9.0)
