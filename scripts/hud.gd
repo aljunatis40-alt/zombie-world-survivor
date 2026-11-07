@@ -163,8 +163,6 @@ func _layout_hud() -> void:
 	joystick_radius = 68.0 * ui_scale
 	var margin := 24.0 * ui_scale
 	var gap := 12.0 * ui_scale
-	var action_size := BASE_BUTTON_SIZE * ui_scale
-	var fire_size := BASE_FIRE_SIZE * ui_scale
 
 	status_label.position = Vector2(margin, margin * 0.8)
 	status_label.add_theme_font_size_override("font_size", roundi(22.0 * ui_scale))
@@ -183,8 +181,6 @@ func _layout_hud() -> void:
 	hint_label.add_theme_font_size_override("font_size", roundi(14.0 * ui_scale))
 
 	# CODM-inspired radial cluster: primary combat controls arc around FIRE.
-	var right := size.x - margin
-	var bottom := size.y - margin
 	var circle_size := Vector2(72.0, 72.0) * ui_scale
 	var fire_circle_size := Vector2(96.0, 82.0) * ui_scale
 	_place_button(fire_button, fire_circle_size, Vector2(-margin - fire_circle_size.x, -margin - fire_circle_size.y - 8.0 * ui_scale))
