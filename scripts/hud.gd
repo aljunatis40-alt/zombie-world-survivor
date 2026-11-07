@@ -182,16 +182,22 @@ func _layout_hud() -> void:
 	hint_label.position = Vector2(margin + 8.0 * ui_scale, -margin - 94.0 * ui_scale)
 	hint_label.add_theme_font_size_override("font_size", roundi(14.0 * ui_scale))
 
-	_place_button(fire_button, fire_size, Vector2(-margin - fire_size.x, -margin - fire_size.y))
-	_place_button(reload_button, action_size, Vector2(-margin - fire_size.x - gap - action_size.x, -margin - action_size.y))
-	_place_button(jump_button, action_size, Vector2(-margin - fire_size.x, -margin - fire_size.y - gap - action_size.y))
-	_place_button(sprint_button, action_size, Vector2(-margin - fire_size.x - gap - action_size.x, -margin - fire_size.y - gap - action_size.y))
-	_place_button(sit_button, action_size, Vector2(-margin - fire_size.x, -margin - fire_size.y - 2.0 * (gap + action_size.y)))
-	_place_button(crouch_button, action_size, Vector2(-margin - fire_size.x - gap - action_size.x, -margin - fire_size.y - 2.0 * (gap + action_size.y)))
-	_place_button(aim_button, action_size, Vector2(-margin - fire_size.x - gap - action_size.x, -margin - fire_size.y - 3.0 * (gap + action_size.y)))
-	_place_button(interact_button, action_size, Vector2(-margin - fire_size.x, -margin - fire_size.y - 3.0 * (gap + action_size.y)))
-	_place_button(heal_button, action_size, Vector2(-margin - fire_size.x - gap - action_size.x, -margin - fire_size.y - 4.0 * (gap + action_size.y)))
-	_place_button(inventory_button, action_size, Vector2(-margin - fire_size.x, -margin - fire_size.y - 4.0 * (gap + action_size.y)))
+	# CODM-inspired radial cluster: primary combat controls arc around FIRE.
+	var right := size.x - margin
+	var bottom := size.y - margin
+	var circle_size := Vector2(72.0, 72.0) * ui_scale
+	var fire_circle_size := Vector2(96.0, 82.0) * ui_scale
+	_place_button(fire_button, fire_circle_size, Vector2(-margin - fire_circle_size.x, -margin - fire_circle_size.y - 8.0 * ui_scale))
+	_place_button(jump_button, circle_size, Vector2(-margin - 210.0 * ui_scale, -margin - 230.0 * ui_scale))
+	_place_button(aim_button, circle_size, Vector2(-margin - 330.0 * ui_scale, -margin - 200.0 * ui_scale))
+	_place_button(reload_button, circle_size, Vector2(-margin - 360.0 * ui_scale, -margin - 105.0 * ui_scale))
+	_place_button(crouch_button, circle_size, Vector2(-margin - 310.0 * ui_scale, -margin - 12.0 * ui_scale))
+	_place_button(sit_button, circle_size, Vector2(-margin - 205.0 * ui_scale, -margin - 12.0 * ui_scale))
+	_place_button(sprint_button, circle_size, Vector2(-margin - 100.0 * ui_scale, -margin - 230.0 * ui_scale))
+	# Utility buttons form a compact inner column, clear of the screen edge.
+	_place_button(interact_button, circle_size, Vector2(-margin - 465.0 * ui_scale, -margin - 285.0 * ui_scale))
+	_place_button(inventory_button, circle_size, Vector2(-margin - 465.0 * ui_scale, -margin - 195.0 * ui_scale))
+	_place_button(heal_button, circle_size, Vector2(-margin - 465.0 * ui_scale, -margin - 105.0 * ui_scale))
 	inventory_panel.position = Vector2(size.x * 0.5 - 150.0 * ui_scale, size.y * 0.5 - 100.0 * ui_scale)
 	inventory_panel.size = Vector2(300.0 * ui_scale, 200.0 * ui_scale)
 	inventory_text.add_theme_font_size_override("font_size", roundi(20.0 * ui_scale))
@@ -215,7 +221,17 @@ func _place_button(button: Button, button_size: Vector2, offset: Vector2) -> voi
 	button.z_index = 101
 	button.visible = true
 	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", roundi(17.0 * ui_scale))
+	button.add_theme_font_size_override("font_size", roundi(15.0 * ui_scale))
+	var round_style := StyleBoxFlat.new()
+	round_style.bg_color = Color(0.08, 0.15, 0.11, 0.88)
+	round_style.border_color = Color(0.48, 0.82, 0.52, 0.92)
+	round_style.set_border_width_all(2)
+	round_style.set_corner_radius_all(roundi(minf(button_size.x, button_size.y) * 0.5))
+	round_style.content_margin_left = 3
+	round_style.content_margin_right = 3
+	button.add_theme_stylebox_override("normal", round_style)
+	button.add_theme_stylebox_override("hover", _button_style(Color(0.17, 0.30, 0.19, 0.96)))
+	button.add_theme_stylebox_override("pressed", _button_style(Color(0.38, 0.20, 0.10, 0.98)))
 
 func _button_style(color: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
